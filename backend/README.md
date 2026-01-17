@@ -34,6 +34,22 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 The API will be available at `http://localhost:8000`
 
+Helpers for running on server:
+
+```bash
+# no hang up pls
+nohup uvicorn main:app --host 0.0.0.0 --port 8000 --reload > uvicorn.log 2>&1 &
+
+# view status
+ps aux | grep uvicorn
+
+# view logs
+tail -f uvicorn.log
+
+# kill process
+pkill -f "uvicorn main:app"
+```
+
 ## 📋 API Routes
 
 ### Root
