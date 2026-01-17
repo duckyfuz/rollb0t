@@ -84,9 +84,9 @@ Create a new user (automatically creates default status entry)
 
 ---
 
-#### `GET /users/{user_id}`
+#### `GET /users/{username}`
 
-Get a user by UUID
+Get a user by username
 
 **Response:** `UserResponse`
 
@@ -133,7 +133,8 @@ Get all status entries for a user by username
     "created_at": "2026-01-17T12:00:00Z",
     "user_uuid": "uuid-string",
     "is_enabled": true,
-    "theme": "pirate",
+    "theme": "transform_02",
+    "request": "make it sound like a pirate",
     "image_url": "https://example.com/image.png",
     "sound_url": "https://example.com/sound.mp3"
   }
@@ -142,9 +143,84 @@ Get all status entries for a user by username
 
 ---
 
+#### `POST /user/{username}/status`
+
+Create a new status entry for a user by username
+
+**Request Body:**
+
+```json
+{
+  "is_enabled": true, // optional, defaults to false
+  "theme": "string", // optional
+  "request": "string", // optional
+  "image_url": "string", // optional
+  "sound_url": "string" // optional
+}
+```
+
+**Response:** `StatusResponse`
+
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
+```
+
+---
+
+#### `PUT /user/{username}/status`
+
+Update the status entry for a user by username (partial update)
+
+**Request Body:**
+
+```json
+{
+  "is_enabled": true, // optional
+  "theme": "string", // optional
+  "request": "string", // optional
+  "image_url": "string", // optional
+  "sound_url": "string" // optional
+}
+```
+
+**Response:** `StatusResponse`
+
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
+```
+
+---
+
 #### `POST /users/{username}/transform`
 
-Transform text based on user's theme using ChatGPT
+Transform text based on user's request with theme-based intensity using ChatGPT
+
+**How it works:**
+
+- The `request` field in the user's status contains the transformation instructions (e.g., "make it sound like a pirate")
+- The `theme` field determines the transformation intensity:
+  - `transform_01`: Subtle, minimal changes (temperature: 0.5)
+  - `transform_02`: Moderate, noticeable changes (temperature: 0.7)
+  - `transform_03`: Intense, dramatic changes (temperature: 0.9)
+- If no `request` is set, returns the original text unchanged
 
 **Request Body:**
 
@@ -158,9 +234,10 @@ Transform text based on user's theme using ChatGPT
 
 ```json
 {
-  "original_text": "Hello world",
-  "transformed_text": "Ahoy, matey!",
-  "theme": "pirate"
+  "original_text": "Hello, how are you?",
+  "transformed_text": "Ahoy there, matey! How be ye farin'?",
+  "theme": "transform_02",
+  "request": "make it sound like a pirate"
 }
 ```
 
@@ -179,6 +256,7 @@ Create a new status entry
   "user_uuid": "string",
   "is_enabled": false, // optional, defaults to false
   "theme": "string", // optional, defaults to null
+  "request": "string", // optional, defaults to null
   "image_url": "string", // optional, defaults to null
   "sound_url": "string" // optional, defaults to null
 }
@@ -192,7 +270,8 @@ Create a new status entry
   "created_at": "2026-01-17T12:00:00Z",
   "user_uuid": "uuid-string",
   "is_enabled": true,
-  "theme": "pirate",
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
   "image_url": "https://example.com/image.png",
   "sound_url": "https://example.com/sound.mp3"
 }
@@ -212,7 +291,8 @@ Get a status entry by ID
   "created_at": "2026-01-17T12:00:00Z",
   "user_uuid": "uuid-string",
   "is_enabled": true,
-  "theme": "pirate",
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
   "image_url": "https://example.com/image.png",
   "sound_url": "https://example.com/sound.mp3"
 }
@@ -230,6 +310,7 @@ Update a status entry (partial update)
 {
   "is_enabled": true, // optional
   "theme": "string", // optional
+  "request": "string", // optional
   "image_url": "string", // optional
   "sound_url": "string" // optional
 }
@@ -243,7 +324,8 @@ Update a status entry (partial update)
   "created_at": "2026-01-17T12:00:00Z",
   "user_uuid": "uuid-string",
   "is_enabled": true,
-  "theme": "pirate",
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
   "image_url": "https://example.com/image.png",
   "sound_url": "https://example.com/sound.mp3"
 }
@@ -266,7 +348,8 @@ Update a status entry (partial update)
 - `created_at` (timestamp)
 - `user_uuid` (UUID, foreign key to users.id)
 - `is_enabled` (boolean)
-- `theme` (string, nullable)
+- `theme` (string, nullable) - Controls transformation intensity: `transform_01`, `transform_02`, or `transform_03`
+- `request` (string, nullable) - User's transformation request text (e.g., "make it sound like a pirate")
 - `image_url` (string, nullable)
 - `sound_url` (string, nullable)
 
@@ -301,10 +384,10 @@ curl -X POST http://localhost:8000/users \
   -H "Content-Type: application/json" \
   -d '{"username": "johndoe"}'
 
-# Update their status with a theme
-curl -X PUT http://localhost:8000/status/1 \
+# Update their status with a transformation request and intensity (using username)
+curl -X PUT http://localhost:8000/user/johndoe/status \
   -H "Content-Type: application/json" \
-  -d '{"theme": "pirate", "is_enabled": true}'
+  -d '{"request": "make it sound like a pirate", "theme": "transform_02", "is_enabled": true}'
 
 # Transform text
 curl -X POST http://localhost:8000/users/johndoe/transform \
