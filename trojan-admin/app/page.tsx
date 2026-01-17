@@ -337,7 +337,6 @@ export default function Home() {
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                <span>Sample user: {SAMPLE_USER}</span>
                 {!isVerified && (
                   <span className="text-[var(--accent)]">
                     Verify user to unlock controls
