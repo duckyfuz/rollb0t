@@ -47,6 +47,13 @@ export default function Home() {
   const [soundUrl, setSoundUrl] = useState("");
   const [userStatus, setUserStatus] = useState<UserCheckStatus>("idle");
   const [userStatusMessage, setUserStatusMessage] = useState("");
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [newIsAdmin, setNewIsAdmin] = useState(false);
+  const [createUserStatus, setCreateUserStatus] = useState<
+    "idle" | "creating" | "success" | "error"
+  >("idle");
+  const [createUserMessage, setCreateUserMessage] = useState("");
 
   useEffect(() => {
     if (!armed) {
@@ -65,7 +72,9 @@ export default function Home() {
   const isVerified = userStatus === "found";
   const intensitySuffix = `0${Math.min(3, Math.max(1, transformLevel))}`;
   const effectiveTheme =
-    mode === "duck" ? `duck_${intensitySuffix}` : `transform_${intensitySuffix}`;
+    mode === "duck"
+      ? `duck_${intensitySuffix}`
+      : `transform_${intensitySuffix}`;
 
   const statusLabel = emergency
     ? "Rollback engaged"
@@ -113,7 +122,50 @@ export default function Home() {
     }
   };
 
+  const handleCreateUser = async () => {
+    const trimmed = newUsername.trim();
+    if (!trimmed) {
+      setCreateUserStatus("error");
+      setCreateUserMessage("Username is required.");
+      return;
+    }
 
+    setCreateUserStatus("creating");
+    setCreateUserMessage("Creating user...");
+    try {
+      const response = await fetch(`${API_BASE}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: trimmed,
+          is_admin: newIsAdmin,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setCreateUserStatus("error");
+        setCreateUserMessage(errorData.detail || "Failed to create user.");
+        return;
+      }
+
+      const user = (await response.json()) as UserResponse;
+      setCreateUserStatus("success");
+      setCreateUserMessage(`User ${user.username} created successfully!`);
+
+      // Reset form after 1.5 seconds and close modal
+      setTimeout(() => {
+        setShowCreateUserModal(false);
+        setNewUsername("");
+        setNewIsAdmin(false);
+        setCreateUserStatus("idle");
+        setCreateUserMessage("");
+      }, 1500);
+    } catch (error) {
+      setCreateUserStatus("error");
+      setCreateUserMessage("Network error. Please try again.");
+    }
+  };
 
   const handleUserCheck = async () => {
     const trimmed = userId.trim();
@@ -135,7 +187,7 @@ export default function Home() {
       }
       const user = (await response.json()) as UserResponse;
       const statusResponse = await fetch(
-        `${API_BASE}/users/${user.username}/status`
+        `${API_BASE}/users/${user.username}/status`,
       );
       if (!statusResponse.ok) {
         setUserStatus("error");
@@ -154,7 +206,7 @@ export default function Home() {
               is_enabled: false,
               theme: "duck",
             }),
-          }
+          },
         );
         if (!createResponse.ok) {
           setUserStatus("error");
@@ -166,7 +218,7 @@ export default function Home() {
         statuses.push(createdStatus);
       }
       const latestStatus = statuses.sort((a, b) =>
-        a.created_at.localeCompare(b.created_at)
+        a.created_at.localeCompare(b.created_at),
       )[statuses.length - 1];
       setVerifiedUser(user.username);
       if (latestStatus.theme) {
@@ -225,6 +277,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <button
+          className="rounded-full border border-[var(--panel-border)] bg-[rgba(16,39,47,0.8)] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-white"
+          onClick={() => setShowCreateUserModal(true)}
+        >
+          + Create User
+        </button>
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 pb-16 sm:px-10">
@@ -432,13 +490,106 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
             </div>
-
           </div>
         </section>
-
       </main>
+
+      {/* Create User Modal */}
+      {showCreateUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[26px] border border-[var(--panel-border)] bg-[rgba(12,29,36,0.95)] p-6 shadow-[var(--shadow)]">
+            <div className="text-lg font-semibold uppercase tracking-[0.12em] text-white">
+              Create New User
+            </div>
+            <div className="mt-1 text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+              Add a new user to the system
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
+                  Username
+                </label>
+                <input
+                  className="mt-2 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+                  placeholder="Enter username"
+                  value={newUsername}
+                  onChange={(e) => {
+                    setNewUsername(e.target.value);
+                    setCreateUserStatus("idle");
+                    setCreateUserMessage("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleCreateUser();
+                    }
+                  }}
+                  disabled={createUserStatus === "creating"}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is-admin"
+                  className="h-4 w-4 rounded border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                  checked={newIsAdmin}
+                  onChange={(e) => setNewIsAdmin(e.target.checked)}
+                  disabled={createUserStatus === "creating"}
+                />
+                <label
+                  htmlFor="is-admin"
+                  className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]"
+                >
+                  Admin User
+                </label>
+              </div>
+
+              {createUserMessage && (
+                <div
+                  className={`rounded-2xl border px-4 py-3 text-center text-xs uppercase tracking-[0.18em] ${
+                    createUserStatus === "success"
+                      ? "border-[var(--accent-2)] bg-[rgba(91,209,183,0.1)] text-[var(--accent-2)]"
+                      : createUserStatus === "error"
+                        ? "border-[var(--accent)] bg-[rgba(244,162,89,0.1)] text-[var(--accent)]"
+                        : "border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] text-[var(--muted)]"
+                  }`}
+                >
+                  {createUserMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                className="flex-1 rounded-full border border-[var(--panel-border)] bg-[rgba(16,39,47,0.8)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setShowCreateUserModal(false);
+                  setNewUsername("");
+                  setNewIsAdmin(false);
+                  setCreateUserStatus("idle");
+                  setCreateUserMessage("");
+                }}
+                disabled={createUserStatus === "creating"}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-full bg-[var(--accent)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#2b1d10] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleCreateUser}
+                disabled={
+                  createUserStatus === "creating" || !newUsername.trim()
+                }
+              >
+                {createUserStatus === "creating"
+                  ? "Creating..."
+                  : "Create User"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
