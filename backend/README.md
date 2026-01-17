@@ -57,6 +57,15 @@ Create a new user (automatically creates default status entry)
 
 **Response:** `UserResponse`
 
+```json
+{
+  "id": "uuid-string",
+  "created_at": "2026-01-17T12:00:00Z",
+  "username": "string",
+  "is_admin": false
+}
+```
+
 ---
 
 #### `GET /users/{user_id}`
@@ -64,6 +73,15 @@ Create a new user (automatically creates default status entry)
 Get a user by UUID
 
 **Response:** `UserResponse`
+
+```json
+{
+  "id": "uuid-string",
+  "created_at": "2026-01-17T12:00:00Z",
+  "username": "string",
+  "is_admin": false
+}
+```
 
 ---
 
@@ -73,6 +91,17 @@ List all users
 
 **Response:** `List[UserResponse]`
 
+```json
+[
+  {
+    "id": "uuid-string",
+    "created_at": "2026-01-17T12:00:00Z",
+    "username": "string",
+    "is_admin": false
+  }
+]
+```
+
 ---
 
 #### `GET /users/{username}/status`
@@ -80,6 +109,20 @@ List all users
 Get all status entries for a user by username
 
 **Response:** `List[StatusResponse]`
+
+```json
+[
+  {
+    "id": 123,
+    "created_at": "2026-01-17T12:00:00Z",
+    "user_uuid": "uuid-string",
+    "is_enabled": true,
+    "theme": "pirate",
+    "image_url": "https://example.com/image.png",
+    "sound_url": "https://example.com/sound.mp3"
+  }
+]
+```
 
 ---
 
@@ -96,6 +139,14 @@ Transform text based on user's theme using ChatGPT
 ```
 
 **Response:** `TextTransformResponse`
+
+```json
+{
+  "original_text": "Hello world",
+  "transformed_text": "Ahoy, matey!",
+  "theme": "pirate"
+}
+```
 
 ---
 
@@ -119,6 +170,18 @@ Create a new status entry
 
 **Response:** `StatusResponse`
 
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
+```
+
 ---
 
 #### `GET /status/{status_id}`
@@ -126,6 +189,18 @@ Create a new status entry
 Get a status entry by ID
 
 **Response:** `StatusResponse`
+
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
+```
 
 ---
 
@@ -146,23 +221,6 @@ Update a status entry (partial update)
 
 **Response:** `StatusResponse`
 
----
-
-## 📦 Response Schemas
-
-### UserResponse
-
-```json
-{
-  "id": "uuid-string",
-  "created_at": "2026-01-17T12:00:00Z",
-  "username": "string",
-  "is_admin": false
-}
-```
-
-### StatusResponse
-
 ```json
 {
   "id": 123,
@@ -172,16 +230,6 @@ Update a status entry (partial update)
   "theme": "pirate",
   "image_url": "https://example.com/image.png",
   "sound_url": "https://example.com/sound.mp3"
-}
-```
-
-### TextTransformResponse
-
-```json
-{
-  "original_text": "Hello world",
-  "transformed_text": "Ahoy, matey!",
-  "theme": "pirate"
 }
 ```
 
