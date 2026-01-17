@@ -1,8 +1,8 @@
 {
-  "name": "trojan-67",
+  "name": "time_tracker_67",
   "displayName": "TT67",
   "version": "0.0.1",
-  "description": "Study time tracker (obviously)",
+  "description": "Your favorite study tool",
   "author": "Ernest Tan <ernest.tanhk@gmail.com>",
   "scripts": {
     "dev": "plasmo dev",
