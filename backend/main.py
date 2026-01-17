@@ -1,11 +1,24 @@
 from fastapi import FastAPI, HTTPException
 from typing import List
-from models import UserCreate, UserResponse, StatusCreate, StatusUpdate, StatusResponse
+from models import (
+    UserCreate,
+    UserResponse,
+    StatusCreate,
+    StatusUpdate,
+    StatusResponse,
+    TextTransformRequest,
+    TextTransformResponse,
+)
 from database import supabase
+from config import settings
+from openai import OpenAI
 
 
 # Create a FastAPI "instance"
 app = FastAPI()
+
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # Define a path operation decorator and function
@@ -189,3 +202,78 @@ async def list_user_status(user_identifier: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.post("/users/{username}/transform", response_model=TextTransformResponse)
+async def transform_text(username: str, request: TextTransformRequest):
+    """Transform text to match a user's theme using ChatGPT."""
+    try:
+        # 1. Fetch the user by username
+        user_response = (
+            supabase.table("users").select("id").eq("username", username).execute()
+        )
+
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_uuid = user_response.data[0]["id"]
+
+        # 2. Fetch the user's status (theme)
+        status_response = (
+            supabase.table("status").select("*").eq("user_uuid", user_uuid).execute()
+        )
+
+        if not status_response.data:
+            raise HTTPException(
+                status_code=404, detail="Status not found for this user"
+            )
+
+        status = status_response.data[0]
+        theme = status.get("theme")
+
+        # 3. If no theme is set, return the original text
+        if not theme:
+            return TextTransformResponse(
+                original_text=request.text,
+                transformed_text=request.text,
+                theme=None,
+            )
+
+        # 4. Use ChatGPT to transform the text based on the theme
+        system_prompt = (
+            "You are a subtle text transformation assistant. Your job is to rewrite text "
+            "to match a specific theme while keeping the changes as inconspicuous as possible. "
+            "The transformed text should maintain the same meaning and structure, but incorporate "
+            "the theme in a natural, subtle way. Do not make dramatic changes or add unnecessary content."
+        )
+
+        user_prompt = f"""Transform the following text to match the theme: "{theme}"
+
+Original text: {request.text}
+
+Provide ONLY the transformed text, without any explanations or additional commentary."""
+
+        completion = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.7,
+            max_tokens=500,
+        )
+
+        transformed_text = completion.choices[0].message.content.strip()
+
+        return TextTransformResponse(
+            original_text=request.text,
+            transformed_text=transformed_text,
+            theme=theme,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error transforming text: {str(e)}"
+        )

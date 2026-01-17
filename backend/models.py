@@ -50,3 +50,17 @@ class StatusResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TextTransformRequest(BaseModel):
+    """Schema for text transformation request."""
+
+    text: str = Field(..., min_length=1, description="Original text to transform")
+
+
+class TextTransformResponse(BaseModel):
+    """Schema for text transformation response."""
+
+    original_text: str
+    transformed_text: str
+    theme: Optional[str] = Field(description="Theme that was applied, if any")
