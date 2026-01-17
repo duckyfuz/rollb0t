@@ -273,7 +273,7 @@ export default function Home() {
               Control Room
             </div>
             <div className="text-lg font-semibold uppercase tracking-[0.12em] text-white">
-              rollb0t
+              Trojan Troller
             </div>
           </div>
         </div>
