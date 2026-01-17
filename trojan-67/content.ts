@@ -180,3 +180,6 @@ storage.watch({
         applyPrank(c.newValue)
     }
 })
+
+// Trigger sync on tab refresh via background script
+chrome.runtime.sendMessage({ type: "SYNC_SEVERITY" })
