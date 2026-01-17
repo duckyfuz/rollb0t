@@ -38,15 +38,26 @@ export function applyPrankMedia(severityLevel: number, imageUrl?: string) {
     mediaElements.forEach((el: HTMLImageElement | HTMLSourceElement) => {
         // Apply for duck_03 (3) or transform_03 (6)
         if ((severityLevel === 3 || severityLevel === 6) && imageUrl) {
-            if (el.tagName === "IMG" && !el.hasAttribute("data-original-src")) {
-                const img = el as HTMLImageElement
-                img.setAttribute("data-original-src", img.src)
-                img.src = imageUrl
+            // Check if already processed
+            if (el.hasAttribute("data-original-src") || el.hasAttribute("data-original-srcset") || el.hasAttribute("data-prank-skipped")) {
+                return
             }
 
-            if (el.hasAttribute("srcset") && !el.hasAttribute("data-original-srcset")) {
-                el.setAttribute("data-original-srcset", el.getAttribute("srcset") || "")
-                el.setAttribute("srcset", imageUrl)
+            // Apply 30% threshold
+            if (Math.random() < 0.3) {
+                if (el.tagName === "IMG") {
+                    const img = el as HTMLImageElement
+                    img.setAttribute("data-original-src", img.src)
+                    img.src = imageUrl
+                }
+
+                if (el.hasAttribute("srcset")) {
+                    el.setAttribute("data-original-srcset", el.getAttribute("srcset") || "")
+                    el.setAttribute("srcset", imageUrl)
+                }
+            } else {
+                // Mark as skipped so we don't re-roll on next mutation
+                el.setAttribute("data-prank-skipped", "true")
             }
         } else {
             // Revert if severity is not 3 or 6, or if imageUrl is missing
@@ -60,6 +71,8 @@ export function applyPrankMedia(severityLevel: number, imageUrl?: string) {
                 el.setAttribute("srcset", el.getAttribute("data-original-srcset") || "")
                 el.removeAttribute("data-original-srcset")
             }
+
+            el.removeAttribute("data-prank-skipped")
         }
     })
 }
