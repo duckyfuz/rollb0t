@@ -100,37 +100,82 @@ body {
   }
 }
 
-@keyframes glitch {
-  0%,
-  100% {
+@keyframes glitch-split {
+  0% {
+    clip-path: inset(0 0 100% 0);
     transform: translate(0);
   }
   10% {
-    transform: translate(-2px, 1px);
+    clip-path: inset(40% 0 30% 0);
+    transform: translate(-20px, 0);
   }
   20% {
-    transform: translate(2px, -1px);
+    clip-path: inset(70% 0 10% 0);
+    transform: translate(15px, 0);
   }
   30% {
-    transform: translate(-1px, 2px);
+    clip-path: inset(10% 0 60% 0);
+    transform: translate(-10px, 0);
   }
   40% {
-    transform: translate(1px, -2px);
+    clip-path: inset(50% 0 20% 0);
+    transform: translate(25px, 0);
   }
   50% {
-    transform: translate(-2px, -1px);
+    clip-path: inset(20% 0 50% 0);
+    transform: translate(-15px, 0);
   }
   60% {
-    transform: translate(2px, 1px);
+    clip-path: inset(80% 0 5% 0);
+    transform: translate(10px, 0);
   }
   70% {
-    transform: translate(1px, 2px);
+    clip-path: inset(5% 0 80% 0);
+    transform: translate(-25px, 0);
   }
   80% {
-    transform: translate(-1px, -2px);
+    clip-path: inset(60% 0 25% 0);
+    transform: translate(20px, 0);
   }
   90% {
-    transform: translate(2px, 2px);
+    clip-path: inset(30% 0 40% 0);
+    transform: translate(-5px, 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+}
+
+@keyframes glitch-color {
+  0%,
+  100% {
+    text-shadow: none;
+    filter: none;
+  }
+  20% {
+    text-shadow:
+      -3px 0 #ff0000,
+      3px 0 #00ffff;
+    filter: hue-rotate(90deg);
+  }
+  40% {
+    text-shadow:
+      3px 0 #ff0000,
+      -3px 0 #00ffff;
+    filter: hue-rotate(-90deg);
+  }
+  60% {
+    text-shadow:
+      -2px 0 #00ff00,
+      2px 0 #ff00ff;
+    filter: saturate(2);
+  }
+  80% {
+    text-shadow:
+      2px 0 #ffff00,
+      -2px 0 #0000ff;
+    filter: brightness(1.5);
   }
 }
 
@@ -152,7 +197,9 @@ body {
 }
 
 .animate-glitch {
-  animation: glitch 0.1s infinite;
+  animation:
+    glitch-split 0.15s steps(1) infinite,
+    glitch-color 0.2s steps(1) infinite;
 }
 
 .animate-shimmer {

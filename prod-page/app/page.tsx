@@ -94,11 +94,43 @@ export default function Home() {
         } as React.CSSProperties
       }
     >
-      {/* Glitch overlay during transition */}
+      {/* Glitch overlay during transition - screen split effect */}
       {glitching && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          <div className="absolute inset-0 bg-red-500/20 animate-pulse" />
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)] opacity-50" />
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {/* Red channel - shifts left */}
+          <div
+            className="absolute inset-0 bg-red-500/30"
+            style={{
+              animation: "0.1s steps(1) infinite",
+              clipPath: "polygon(0 0, 100% 0, 100% 33%, 0 33%)",
+              transform: "translateX(-10px)",
+            }}
+          />
+          {/* Cyan channel - shifts right */}
+          <div
+            className="absolute inset-0 bg-cyan-500/30"
+            style={{
+              clipPath: "polygon(0 33%, 100% 33%, 100% 66%, 0 66%)",
+              transform: "translateX(10px)",
+            }}
+          />
+          {/* Blue channel - shifts left */}
+          <div
+            className="absolute inset-0 bg-blue-500/30"
+            style={{
+              clipPath: "polygon(0 66%, 100% 66%, 100% 100%, 0 100%)",
+              transform: "translateX(-15px)",
+            }}
+          />
+          {/* Horizontal tear lines */}
+          <div className="absolute inset-0">
+            <div className="absolute w-full h-[2px] bg-white/80 top-[33%] shadow-[0_0_10px_#fff]" />
+            <div className="absolute w-full h-[2px] bg-white/80 top-[66%] shadow-[0_0_10px_#fff]" />
+          </div>
+          {/* Scanlines */}
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.4)_2px,rgba(0,0,0,0.4)_4px)] opacity-60" />
+          {/* Flash */}
+          <div className="absolute inset-0 bg-white/10 animate-pulse" />
         </div>
       )}
 
