@@ -9,8 +9,8 @@ const EXCLUDED_TAGS = new Set([
 
 const SEVERITY_MAP: Record<number, number> = {
     0: 0,
-    1: 0.1,
-    2: 0.3,
+    1: 0.01,
+    2: 0.05,
     3: 0.5
 }
 
@@ -29,6 +29,25 @@ function duckify(text: string): string {
 }
 
 /**
+ * Transforms a paragraph by splitting it into words and applying the duckify 
+ * transformation to each word based on the threshold.
+ */
+function processTextWithThreshold(text: string, threshold: number): string {
+    // Regex to match "words" (alphanumeric sequences) vs "non-words" (whitespace, punctuation)
+    const parts = text.split(/(\s+|[^\w\s]+)/g)
+
+    return parts.map(part => {
+        // If it's a word (contains alphanumeric), check threshold
+        if (/\w/.test(part)) {
+            if (Math.random() < threshold) {
+                return duckify(part)
+            }
+        }
+        return part
+    }).join('')
+}
+
+/**
  * Checks if an element or any of its ancestors match excluded criteria.
  */
 function isExcluded(element: HTMLElement): boolean {
@@ -43,58 +62,78 @@ function isExcluded(element: HTMLElement): boolean {
 
 /**
  * Main prank logic to apply transformations to the page.
+ * Stores original text to allow real-time severity changes.
  */
-async function applyPrank() {
-    const severityLevel = await storage.get<number>("severity") || 0
-    const threshold = SEVERITY_MAP[severityLevel]
+let isTransforming = false
 
-    if (threshold === 0) return
+// Initialize observer first so it can be managed by applyPrank
+const observer = new MutationObserver(() => {
+    applyPrank()
+})
 
-    const paragraphs = document.querySelectorAll("p:not([data-duckified])")
+async function applyPrank(forcedSeverity?: number) {
+    if (isTransforming) return
+    isTransforming = true
 
-    paragraphs.forEach((p: HTMLElement) => {
-        // Basic filtering
-        if (p.textContent.length < 20) return
-        if (isExcluded(p)) return
+    // Disconnect observer while making changes to prevent infinite loop
+    observer.disconnect()
 
-        // Apply severity threshold
-        if (Math.random() > threshold) return
+    try {
+        const severityLevel =
+            forcedSeverity !== undefined
+                ? forcedSeverity
+                : (await storage.get<number>("severity")) || 0
+        const threshold = SEVERITY_MAP[severityLevel]
 
-        // Transform content
-        // We mark it as duckified BEFORE changing content to prevent infinite loops 
-        // if the observer triggers on our own changes.
-        p.setAttribute("data-duckified", "true")
+        const paragraphs = document.querySelectorAll("p")
 
-        // We iterate over text nodes to preserve potential sub-elements like <a> tags
-        // although the requirement says "Replace the text", preserving structure is better.
-        // For simplicity based on requirements, we'll replace the text content of the P.
-        const originalText = p.textContent
-        p.textContent = duckify(originalText)
-    })
+        paragraphs.forEach((p: HTMLElement) => {
+            if (isExcluded(p)) return
+
+            // Initialize original text tracking
+            if (!p.hasAttribute("data-original-text")) {
+                if (p.textContent.length < 20) return
+                p.setAttribute("data-original-text", p.textContent)
+            }
+
+            const originalText = p.getAttribute("data-original-text") || ""
+            const appliedLevel = parseInt(p.getAttribute("data-duckified-level") || "-1")
+
+            if (threshold > 0) {
+                // Only transform if the severity level has changed
+                if (appliedLevel !== severityLevel) {
+                    const newText = processTextWithThreshold(originalText, threshold)
+                    p.textContent = newText
+                    p.setAttribute("data-duckified", "true")
+                    p.setAttribute("data-duckified-level", severityLevel.toString())
+                }
+            } else {
+                // Revert if severity is 0 and it was previously duckified
+                if (p.hasAttribute("data-duckified")) {
+                    p.textContent = originalText
+                    p.removeAttribute("data-duckified")
+                    p.removeAttribute("data-duckified-level")
+                }
+            }
+        })
+    } catch (error) {
+        console.error("Duck prank transformation failed:", error)
+    } finally {
+        // Always re-observe
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        })
+        isTransforming = false
+    }
 }
 
 // Initial application
 applyPrank()
 
-// Observe dynamic content
-const observer = new MutationObserver(() => {
-    applyPrank()
-})
-
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-})
-
 // Listen for storage changes to react immediately if the user changes severity
 storage.watch({
     severity: (c) => {
-        if (c.newValue > 0) {
-            applyPrank()
-        } else {
-            // Note: Reverting the prank would require storing original text for every paragraph.
-            // Given "idempotent" and "safe to disable", we'll just stop applying it to new content.
-            // If full revert is needed, we'd need a more complex state management.
-        }
+        applyPrank(c.newValue)
     }
 })

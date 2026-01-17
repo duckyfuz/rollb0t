@@ -24,10 +24,10 @@ function IndexPopup() {
               onChange={() => handleSeverityChange(level)}
             />
             <span>
-              {level === 0 ? "Disabled (0%)" : 
-               level === 1 ? "Mild (10%)" : 
-               level === 2 ? "Wacky (30%)" : 
-               "QUACK (50%)"}
+              {level === 0 ? "Disabled (0%)" :
+                level === 1 ? "Mild (1%)" :
+                  level === 2 ? "Wacky (5%)" :
+                    "QUACK (50%)"}
             </span>
           </label>
         ))}
