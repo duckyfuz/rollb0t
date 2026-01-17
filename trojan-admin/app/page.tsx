@@ -376,7 +376,6 @@ export default function Home() {
           >
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
-                Live intensity
               </div>
             </div>
 
