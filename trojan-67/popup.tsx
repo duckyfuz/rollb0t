@@ -5,10 +5,13 @@ import "./style.css"
 function IndexPopup() {
   const [username, setUsername] = useStorage<string>("username")
   const [severity, setSeverity] = useStorage<number>("severity", 0)
+  const [articlesCount, setArticlesCount] = useStorage<number>("articlesCount", 12)
+  const [studyMinutes, setStudyMinutes] = useStorage<number>("studyMinutes", 42)
 
   const [inputUsername, setInputUsername] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [error, setError] = useState("")
 
   const syncSeverity = async (targetUsername: string) => {
@@ -75,14 +78,25 @@ function IndexPopup() {
 
   const getSeverityLabel = (val: number) => {
     switch (val) {
-      case 1: return "Ducky (Mild)"
-      case 2: return "Ducky (Wacky)"
-      case 3: return "Ducky (QUACK)"
-      case 4: return "Transform (Subtle)"
-      case 5: return "Transform (Medium)"
-      case 6: return "Transform (CHAOS)"
+      case 1: return "Subtle"
+      case 2: return "Medium"
+      case 3: return "Max"
+      case 4: return "Subtle"
+      case 5: return "Medium"
+      case 6: return "Max"
       default: return "Disabled"
     }
+  }
+
+  const handlePlusOne = () => {
+    // Refresh the current page to sync with backend
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.reload(tabs[0].id)
+      }
+    })
+    // Also increment fake count locally for feedback
+    setArticlesCount((prev) => (prev || 0) + 1)
   }
 
   if (!username) {
@@ -121,15 +135,15 @@ function IndexPopup() {
   }
 
   return (
-    <div className={`popup-container ${severity >= 4 ? 'theme-transform' : ''}`}>
+    <div className="popup-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <h1>Duck Status</h1>
+        <h1>Study Insights</h1>
         <button
           onClick={() => setUsername(null)}
           style={{
             background: 'none',
             border: 'none',
-            fontSize: '0.7rem',
+            fontSize: '0.65rem',
             color: 'var(--text-secondary)',
             cursor: 'pointer',
             textDecoration: 'underline'
@@ -138,31 +152,64 @@ function IndexPopup() {
           Logout
         </button>
       </div>
+      <p className="subtitle" style={{ marginBottom: '16px' }}>Focus Session Active</p>
 
-      <div className="status-card">
-        <span className="status-label">Current Severity</span>
-        <span className="status-value">{getSeverityLabel(severity)}</span>
-        <span className="status-theme">{severity > 0 ? (severity <= 3 ? "Duck Mode Active" : "Transformation Mode Active") : "System Inactive"}</span>
+      <div className="study-dashboard">
+        <div className="study-card">
+          <span className="study-card-value">{articlesCount}</span>
+          <span className="study-card-label">Articles Read</span>
+        </div>
+        <div className="study-card">
+          <span className="study-card-value">{studyMinutes}m</span>
+          <span className="study-card-label">Focus Time</span>
+        </div>
+      </div>
 
+      <button className="big-plus-button" onClick={handlePlusOne}>
+        +1
+        <span>Mark Article as Read</span>
+      </button>
+
+      <div className="system-toggle">
         <button
-          className="sync-button"
-          onClick={() => syncSeverity(username)}
-          disabled={isSyncing}
+          className="toggle-btn"
+          onClick={() => setIsDetailsOpen(!isDetailsOpen)}
         >
-          <div className={`sync-icon ${isSyncing ? 'spinning' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Refresh Status'}
+          {isDetailsOpen ? '▲ Hide System Status' : '▼ Show System Status'}
         </button>
+
+        <div className={`status-details ${isDetailsOpen ? 'open' : ''}`}>
+          <div className="details-content">
+            <div className="detail-row">
+              <strong>Status:</strong>
+              <span>{severity > 0 ? 'Active' : 'Inactive'}</span>
+            </div>
+            <div className="detail-row">
+              <strong>Severity:</strong>
+              <span>{getSeverityLabel(severity)}</span>
+            </div>
+            <div className="detail-row">
+              <strong>Theme:</strong>
+              <span>{severity <= 3 ? (severity === 0 ? "None" : "Subtle-Max") : "Transformation"}</span>
+            </div>
+            <div className="detail-row">
+              <strong>User:</strong>
+              <span>{username}</span>
+            </div>
+            <button
+              className="sync-button"
+              onClick={() => syncSeverity(username)}
+              disabled={isSyncing}
+              style={{ width: '100%', marginTop: '8px' }}
+            >
+              <div className={`sync-icon ${isSyncing ? 'spinning' : ''}`} />
+              {isSyncing ? 'Syncing...' : 'Force Sync'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="status-bar">
-        <div className={`status-indicator ${severity > 0 ? 'active' : ''}`} />
-        {severity > 0 ? 'Active' : 'Inactive'}
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-        Logged in as: <strong>{username}</strong>
-      </div>
-      {error && <div className="error-message" style={{ textAlign: 'center', marginTop: '8px' }}>{error}</div>}
+      {error && <div className="error-message" style={{ textAlign: 'center', marginTop: '12px' }}>{error}</div>}
     </div>
   )
 }

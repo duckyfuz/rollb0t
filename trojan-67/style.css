@@ -2,12 +2,13 @@
   --bg-color: #ffffff;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
-  --accent-color: #fbc02d;
-  /* Duck yellow */
-  --accent-secondary: #fff9c4;
+  --accent-color: #2e7d32;
+  /* Study Green */
+  --accent-secondary: #e8f5e9;
   --border-color: #f0f0f0;
   --hover-bg: #fafafa;
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .theme-transform {
@@ -211,77 +212,130 @@ h1 {
   }
 }
 
-/* Status Card Styles */
-.status-card {
-  background-color: var(--hover-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
+/* Study Tool Dashboard */
+.study-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+  margin: 16px 0 24px 0;
+}
+
+.study-card {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  border-radius: 12px;
   text-align: center;
+  box-shadow: var(--shadow);
   transition: var(--transition);
 }
 
-.status-card:hover {
+.study-card:hover {
+  transform: translateY(-2px);
   border-color: var(--accent-color);
 }
 
-.status-label {
-  font-size: 0.75rem;
+.study-card-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 4px;
+}
+
+.study-card-label {
+  display: block;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.status-value {
+.big-plus-button {
+  width: 100%;
+  padding: 20px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 16px;
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(46, 125, 50, 0.2);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
-.status-theme {
-  font-size: 0.9rem;
+.big-plus-button span {
+  font-size: 0.8rem;
   font-weight: 500;
+  opacity: 0.9;
+}
+
+.big-plus-button:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+  box-shadow: 0 12px 20px rgba(46, 125, 50, 0.3);
+}
+
+.big-plus-button:active {
+  transform: scale(0.98);
+}
+
+/* Hidden Status Dropdown */
+.system-toggle {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 8px;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toggle-btn:hover {
   color: var(--text-secondary);
 }
 
-.sync-button {
-  background: none;
+.status-details {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.4s ease-out;
+  background: #fcfcfc;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.status-details.open {
+  max-height: 200px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 6px 12px;
+}
+
+.details-content {
+  padding: 12px;
   font-size: 0.75rem;
-  cursor: pointer;
+  text-align: left;
+}
+
+.detail-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  align-self: center;
-  margin-top: 4px;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
-.sync-button:hover:not(:disabled) {
-  background-color: var(--accent-secondary);
-  border-color: var(--accent-color);
-}
-
-.sync-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.sync-icon {
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--text-secondary);
-  border-left-color: transparent;
-  border-radius: 50%;
-  animation: none;
-}
-
-.sync-icon.spinning {
-  animation: spin 1s linear infinite;
+.detail-row strong {
+  color: var(--text-secondary);
 }

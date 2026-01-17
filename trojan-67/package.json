@@ -1,9 +1,9 @@
 {
   "name": "trojan-67",
-  "displayName": "Trojan 67",
+  "displayName": "TT67",
   "version": "0.0.1",
-  "description": "study time tracker (obviously)",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
+  "description": "Study time tracker (obviously)",
+  "author": "Ernest Tan <ernest.tanhk@gmail.com>",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
