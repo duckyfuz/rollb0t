@@ -10,6 +10,36 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.theme-transform {
+  --accent-color: #7c4dff;
+  /* Purple for Transform/Magic */
+  --accent-secondary: #ede7f6;
+}
+
+@keyframes pulse-opacity {
+  0% {
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+
+  50% {
+    opacity: 0.3;
+    filter: blur(2px);
+  }
+
+  100% {
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+}
+
+.transform-pending {
+  animation: pulse-opacity 1.5s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  transition: var(--transition);
+}
+
 .popup-container {
   width: 240px;
   padding: 24px;
