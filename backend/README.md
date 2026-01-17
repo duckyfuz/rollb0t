@@ -84,9 +84,9 @@ Create a new user (automatically creates default status entry)
 
 ---
 
-#### `GET /users/{user_id}`
+#### `GET /users/{username}`
 
-Get a user by UUID
+Get a user by username
 
 **Response:** `UserResponse`
 
@@ -139,6 +139,72 @@ Get all status entries for a user by username
     "sound_url": "https://example.com/sound.mp3"
   }
 ]
+```
+
+---
+
+#### `POST /user/{username}/status`
+
+Create a new status entry for a user by username
+
+**Request Body:**
+
+```json
+{
+  "is_enabled": true, // optional, defaults to false
+  "theme": "string", // optional
+  "request": "string", // optional
+  "image_url": "string", // optional
+  "sound_url": "string" // optional
+}
+```
+
+**Response:** `StatusResponse`
+
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
+```
+
+---
+
+#### `PUT /user/{username}/status`
+
+Update the status entry for a user by username (partial update)
+
+**Request Body:**
+
+```json
+{
+  "is_enabled": true, // optional
+  "theme": "string", // optional
+  "request": "string", // optional
+  "image_url": "string", // optional
+  "sound_url": "string" // optional
+}
+```
+
+**Response:** `StatusResponse`
+
+```json
+{
+  "id": 123,
+  "created_at": "2026-01-17T12:00:00Z",
+  "user_uuid": "uuid-string",
+  "is_enabled": true,
+  "theme": "transform_02",
+  "request": "make it sound like a pirate",
+  "image_url": "https://example.com/image.png",
+  "sound_url": "https://example.com/sound.mp3"
+}
 ```
 
 ---
@@ -318,8 +384,8 @@ curl -X POST http://localhost:8000/users \
   -H "Content-Type: application/json" \
   -d '{"username": "johndoe"}'
 
-# Update their status with a transformation request and intensity
-curl -X PUT http://localhost:8000/status/1 \
+# Update their status with a transformation request and intensity (using username)
+curl -X PUT http://localhost:8000/user/johndoe/status \
   -H "Content-Type: application/json" \
   -d '{"request": "make it sound like a pirate", "theme": "transform_02", "is_enabled": true}'
 

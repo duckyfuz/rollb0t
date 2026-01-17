@@ -73,11 +73,13 @@ async def create_user(user: UserCreate):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@app.get("/users/{user_id}", response_model=UserResponse)
-async def get_user(user_id: str):
-    """Get a user by their UUID."""
+@app.get("/users/{username}", response_model=UserResponse)
+async def get_user(username: str):
+    """Get a user by their username."""
     try:
-        response = supabase.table("users").select("*").eq("id", user_id).execute()
+        response = (
+            supabase.table("users").select("*").eq("username", username).execute()
+        )
 
         if not response.data:
             raise HTTPException(status_code=404, detail="User not found")
@@ -210,6 +212,92 @@ async def list_user_status(user_identifier: str):
             supabase.table("status").select("*").eq("user_uuid", user_uuid).execute()
         )
         return response.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.post("/user/{username}/status", response_model=StatusResponse, status_code=201)
+async def create_user_status_by_username(username: str, status: StatusUpdate):
+    """Create a new status entry for a user identified by username."""
+    try:
+        # 1. Look up the user by username
+        user_response = (
+            supabase.table("users").select("id").eq("username", username).execute()
+        )
+
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_uuid = user_response.data[0]["id"]
+
+        # 2. Create the status entry
+        status_data = {
+            "user_uuid": user_uuid,
+            "is_enabled": status.is_enabled if status.is_enabled is not None else False,
+            "theme": status.theme,
+            "request": status.request,
+            "image_url": status.image_url,
+            "sound_url": status.sound_url,
+        }
+
+        response = supabase.table("status").insert(status_data).execute()
+
+        if not response.data:
+            raise HTTPException(status_code=500, detail="Failed to create status")
+
+        return response.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.put("/user/{username}/status", response_model=StatusResponse)
+async def update_user_status_by_username(username: str, status: StatusUpdate):
+    """Update the status entry for a user identified by username."""
+    try:
+        # 1. Look up the user by username
+        user_response = (
+            supabase.table("users").select("id").eq("username", username).execute()
+        )
+
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_uuid = user_response.data[0]["id"]
+
+        # 2. Build update dict with only provided fields
+        update_data = {}
+        if status.is_enabled is not None:
+            update_data["is_enabled"] = status.is_enabled
+        if status.theme is not None:
+            update_data["theme"] = status.theme
+        if status.request is not None:
+            update_data["request"] = status.request
+        if status.image_url is not None:
+            update_data["image_url"] = status.image_url
+        if status.sound_url is not None:
+            update_data["sound_url"] = status.sound_url
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # 3. Update the status entry for this user
+        response = (
+            supabase.table("status")
+            .update(update_data)
+            .eq("user_uuid", user_uuid)
+            .execute()
+        )
+
+        if not response.data:
+            raise HTTPException(
+                status_code=404, detail="Status not found for this user"
+            )
+
+        return response.data[0]
     except HTTPException:
         raise
     except Exception as e:
