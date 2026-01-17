@@ -266,7 +266,7 @@ export default function Home() {
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pb-10 pt-8 sm:px-10">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--panel-border)] bg-[rgba(16,39,47,0.8)] text-xl font-semibold text-[var(--accent)] shadow-[var(--shadow)]">
-            R0
+            TT
           </div>
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
