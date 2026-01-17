@@ -52,6 +52,8 @@ async def create_user(user: UserCreate):
                     "user_uuid": user_uuid,
                     "is_enabled": False,
                     "theme": None,
+                    "image_url": None,
+                    "sound_url": None,
                 }
             )
             .execute()
@@ -116,6 +118,8 @@ async def create_status(status: StatusCreate):
                     "user_uuid": status.user_uuid,
                     "is_enabled": status.is_enabled,
                     "theme": status.theme,
+                    "image_url": status.image_url,
+                    "sound_url": status.sound_url,
                 }
             )
             .execute()
@@ -157,6 +161,10 @@ async def update_status(status_id: int, status: StatusUpdate):
             update_data["is_enabled"] = status.is_enabled
         if status.theme is not None:
             update_data["theme"] = status.theme
+        if status.image_url is not None:
+            update_data["image_url"] = status.image_url
+        if status.sound_url is not None:
+            update_data["sound_url"] = status.sound_url
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")
