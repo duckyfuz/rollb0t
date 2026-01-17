@@ -1,7 +1,9 @@
 import { Storage } from "@plasmohq/storage"
+import duckImage from "data-base64:~assets/duck.jpg"
 
 const storage = new Storage()
 
+// ... (EXCLUDED_TAGS and SEVERITY_MAP remain same)
 const EXCLUDED_TAGS = new Set([
     "FORM", "INPUT", "TEXTAREA", "BUTTON",
     "CODE", "PRE", "KBD"
@@ -14,11 +16,7 @@ const SEVERITY_MAP: Record<number, number> = {
     3: 0.5
 }
 
-/**
- * Transforms a sentence into "duckified" text.
- * Replaces only alphanumeric characters with '🦆', matching character count.
- * Preserves punctuation and whitespace.
- */
+// ... (duckify and processTextWithThreshold remains same)
 function duckify(text: string): string {
     return text.split('').map(char => {
         if (/[a-zA-Z0-9]/.test(char)) {
@@ -28,16 +26,9 @@ function duckify(text: string): string {
     }).join('')
 }
 
-/**
- * Transforms a paragraph by splitting it into words and applying the duckify 
- * transformation to each word based on the threshold.
- */
 function processTextWithThreshold(text: string, threshold: number): string {
-    // Regex to match "words" (alphanumeric sequences) vs "non-words" (whitespace, punctuation)
     const parts = text.split(/(\s+|[^\w\s]+)/g)
-
     return parts.map(part => {
-        // If it's a word (contains alphanumeric), check threshold
         if (/\w/.test(part)) {
             if (Math.random() < threshold) {
                 return duckify(part)
@@ -47,9 +38,6 @@ function processTextWithThreshold(text: string, threshold: number): string {
     }).join('')
 }
 
-/**
- * Checks if an element or any of its ancestors match excluded criteria.
- */
 function isExcluded(element: HTMLElement): boolean {
     let curr: HTMLElement | null = element
     while (curr) {
@@ -60,13 +48,8 @@ function isExcluded(element: HTMLElement): boolean {
     return false
 }
 
-/**
- * Main prank logic to apply transformations to the page.
- * Stores original text to allow real-time severity changes.
- */
 let isTransforming = false
 
-// Initialize observer first so it can be managed by applyPrank
 const observer = new MutationObserver(() => {
     applyPrank()
 })
@@ -75,7 +58,6 @@ async function applyPrank(forcedSeverity?: number) {
     if (isTransforming) return
     isTransforming = true
 
-    // Disconnect observer while making changes to prevent infinite loop
     observer.disconnect()
 
     try {
@@ -85,12 +67,11 @@ async function applyPrank(forcedSeverity?: number) {
                 : (await storage.get<number>("severity")) || 0
         const threshold = SEVERITY_MAP[severityLevel]
 
+        // 1. Handle Paragraphs
         const paragraphs = document.querySelectorAll("p")
-
         paragraphs.forEach((p: HTMLElement) => {
             if (isExcluded(p)) return
 
-            // Initialize original text tracking
             if (!p.hasAttribute("data-original-text")) {
                 if (p.textContent.length < 20) return
                 p.setAttribute("data-original-text", p.textContent)
@@ -100,15 +81,12 @@ async function applyPrank(forcedSeverity?: number) {
             const appliedLevel = parseInt(p.getAttribute("data-duckified-level") || "-1")
 
             if (threshold > 0) {
-                // Only transform if the severity level has changed
                 if (appliedLevel !== severityLevel) {
-                    const newText = processTextWithThreshold(originalText, threshold)
-                    p.textContent = newText
+                    p.textContent = processTextWithThreshold(originalText, threshold)
                     p.setAttribute("data-duckified", "true")
                     p.setAttribute("data-duckified-level", severityLevel.toString())
                 }
             } else {
-                // Revert if severity is 0 and it was previously duckified
                 if (p.hasAttribute("data-duckified")) {
                     p.textContent = originalText
                     p.removeAttribute("data-duckified")
@@ -116,22 +94,54 @@ async function applyPrank(forcedSeverity?: number) {
                 }
             }
         })
+
+        // 2. Handle Images & Sources (QUACK mode only)
+        const mediaElements = document.querySelectorAll("img, source")
+        mediaElements.forEach((el: HTMLImageElement | HTMLSourceElement) => {
+            if (severityLevel === 3) {
+                // Swap src
+                if (el.tagName === "IMG" && !el.hasAttribute("data-original-src")) {
+                    const img = el as HTMLImageElement
+                    img.setAttribute("data-original-src", img.src)
+                    img.src = duckImage
+                }
+
+                // Swap srcset (common in modern sites and lazy loading)
+                if (el.hasAttribute("srcset") && !el.hasAttribute("data-original-srcset")) {
+                    el.setAttribute("data-original-srcset", el.getAttribute("srcset") || "")
+                    el.setAttribute("srcset", duckImage)
+                }
+            } else {
+                // Restore src
+                if (el.hasAttribute("data-original-src")) {
+                    const img = el as HTMLImageElement
+                    img.src = img.getAttribute("data-original-src") || ""
+                    img.removeAttribute("data-original-src")
+                }
+
+                // Restore srcset
+                if (el.hasAttribute("data-original-srcset")) {
+                    el.setAttribute("srcset", el.getAttribute("data-original-srcset") || "")
+                    el.removeAttribute("data-original-srcset")
+                }
+            }
+        })
+
     } catch (error) {
         console.error("Duck prank transformation failed:", error)
     } finally {
-        // Always re-observe
         observer.observe(document.body, {
             childList: true,
-            subtree: true
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["src", "srcset"]
         })
         isTransforming = false
     }
 }
 
-// Initial application
 applyPrank()
 
-// Listen for storage changes to react immediately if the user changes severity
 storage.watch({
     severity: (c) => {
         applyPrank(c.newValue)
