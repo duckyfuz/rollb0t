@@ -2,12 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-const KNOWN_USERS = new Set(["r0-01", "rollb0t", "admin", "duck-ops"]);
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 const SAMPLE_USER = "r0-01";
-const INTENSITY_PRESETS = [0, 20, 60, 100];
+const INTENSITY_PRESETS = [1, 2, 3];
 
-const clamp = (value: number, min = 0, max = 100) => {
-  return Math.min(max, Math.max(min, value));
+type UserResponse = {
+  id: string;
+  username: string;
+  is_admin: boolean;
+};
+
+type StatusResponse = {
+  id: number;
+  user_uuid: string;
+  is_enabled: boolean;
+  theme?: string | null;
+  request?: string | null;
+  image_url?: string | null;
+  sound_url?: string | null;
+  created_at: string;
 };
 
 const formatDuration = (seconds: number) => {
@@ -19,31 +32,21 @@ const formatDuration = (seconds: number) => {
     .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
-type UserCheckStatus = "idle" | "found" | "missing" | "error";
+type UserCheckStatus = "idle" | "checking" | "found" | "missing" | "error";
 
 export default function Home() {
   const [armed, setArmed] = useState(false);
   const [mode, setMode] = useState<"duck" | "transform">("duck");
-  const [themeWord, setThemeWord] = useState("duck");
-  const [textIntensity, setTextIntensity] = useState(35);
-  const [audioIntensity, setAudioIntensity] = useState(20);
-  const [visualIntensity, setVisualIntensity] = useState(60);
-  const [audioMuted] = useState(false);
-  const [mutationsFrozen] = useState(false);
-  const [swapImages] = useState(false);
+  const [requestText, setRequestText] = useState("");
+  const [transformLevel, setTransformLevel] = useState(2);
   const [emergency] = useState(false);
-  const [tick, setTick] = useState(0);
   const [activeSeconds, setActiveSeconds] = useState(0);
   const [userId, setUserId] = useState("");
+  const [verifiedUser, setVerifiedUser] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [soundUrl, setSoundUrl] = useState("");
   const [userStatus, setUserStatus] = useState<UserCheckStatus>("idle");
   const [userStatusMessage, setUserStatusMessage] = useState("");
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTick((value) => value + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!armed) {
@@ -56,23 +59,13 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [armed]);
 
-  const normalizedTheme = themeWord.trim() || "duck";
-  const themeTitle = normalizedTheme.toLowerCase();
-  const themeCaps = normalizedTheme.toUpperCase();
+  const normalizedRequest = requestText.trim();
+  const themeCaps = normalizedRequest.toUpperCase();
   const sessionTime = formatDuration(activeSeconds);
   const isVerified = userStatus === "found";
-
-  const effectiveText = clamp(
-    isVerified && armed && !emergency && !mutationsFrozen ? textIntensity : 0
-  );
-  const effectiveAudio = clamp(
-    isVerified && armed && !emergency && !audioMuted ? audioIntensity : 0
-  );
-  const effectiveVisual = clamp(
-    isVerified && armed && !emergency
-      ? (swapImages ? visualIntensity : visualIntensity * 0.7)
-      : 0
-  );
+  const intensitySuffix = `0${Math.min(3, Math.max(1, transformLevel))}`;
+  const effectiveTheme =
+    mode === "duck" ? `duck_${intensitySuffix}` : `transform_${intensitySuffix}`;
 
   const statusLabel = emergency
     ? "Rollback engaged"
@@ -80,15 +73,49 @@ export default function Home() {
       ? "Console active"
       : "Console idle";
 
-  const setAllIntensity = (value: number) => {
-    setTextIntensity(value);
-    setAudioIntensity(value);
-    setVisualIntensity(value);
+  useEffect(() => {
+    if (!isVerified || !verifiedUser) return;
+    const timer = setTimeout(() => {
+      void syncStatus(armed);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    armed,
+    mode,
+    requestText,
+    imageUrl,
+    soundUrl,
+    transformLevel,
+    isVerified,
+    verifiedUser,
+  ]);
+
+  const syncStatus = async (nextEnabled: boolean) => {
+    if (!verifiedUser) return;
+    try {
+      const response = await fetch(`${API_BASE}/user/${verifiedUser}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_enabled: nextEnabled,
+          theme: effectiveTheme,
+          request: mode === "transform" ? normalizedRequest || null : null,
+          image_url: imageUrl || null,
+          sound_url: soundUrl || null,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Status update failed");
+      }
+      setUserStatusMessage("Status synced.");
+    } catch (error) {
+      setUserStatusMessage("Failed to sync status.");
+    }
   };
 
 
 
-  const handleUserCheck = () => {
+  const handleUserCheck = async () => {
     const trimmed = userId.trim();
     if (!trimmed) {
       setUserStatus("error");
@@ -96,13 +123,83 @@ export default function Home() {
       return;
     }
 
-    const exists = KNOWN_USERS.has(trimmed.toLowerCase());
-    setUserStatus(exists ? "found" : "missing");
-    setUserStatusMessage(
-      exists
-        ? `User ${trimmed} found in registry.`
-        : `User ${trimmed} not found.`
-    );
+    setUserStatus("checking");
+    setUserStatusMessage("Checking user...");
+    try {
+      const response = await fetch(`${API_BASE}/users/${trimmed}`);
+      if (!response.ok) {
+        setUserStatus("missing");
+        setUserStatusMessage(`User ${trimmed} not found.`);
+        setVerifiedUser(null);
+        return;
+      }
+      const user = (await response.json()) as UserResponse;
+      const statusResponse = await fetch(
+        `${API_BASE}/users/${user.username}/status`
+      );
+      if (!statusResponse.ok) {
+        setUserStatus("error");
+        setUserStatusMessage("Unable to load user status.");
+        setVerifiedUser(null);
+        return;
+      }
+      const statuses = (await statusResponse.json()) as StatusResponse[];
+      if (statuses.length === 0) {
+        const createResponse = await fetch(
+          `${API_BASE}/user/${user.username}/status`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              is_enabled: false,
+              theme: "duck",
+            }),
+          }
+        );
+        if (!createResponse.ok) {
+          setUserStatus("error");
+          setUserStatusMessage("No status entry found for user.");
+          setVerifiedUser(null);
+          return;
+        }
+        const createdStatus = (await createResponse.json()) as StatusResponse;
+        statuses.push(createdStatus);
+      }
+      const latestStatus = statuses.sort((a, b) =>
+        a.created_at.localeCompare(b.created_at)
+      )[statuses.length - 1];
+      setVerifiedUser(user.username);
+      if (latestStatus.theme) {
+        const themeValue = latestStatus.theme.toLowerCase();
+        if (themeValue === "duck" || themeValue.startsWith("duck_")) {
+          setMode("duck");
+          if (themeValue.startsWith("duck_")) {
+            const level = Number(themeValue.replace("duck_", ""));
+            if (!Number.isNaN(level)) {
+              setTransformLevel(Math.min(3, Math.max(1, level)));
+            }
+          }
+        } else if (themeValue.startsWith("transform_")) {
+          const level = Number(themeValue.replace("transform_", ""));
+          setMode("transform");
+          if (!Number.isNaN(level)) {
+            setTransformLevel(Math.min(3, Math.max(1, level)));
+          }
+        } else {
+          setMode("transform");
+        }
+      }
+      setRequestText(latestStatus.request || "");
+      setImageUrl(latestStatus.image_url || "");
+      setSoundUrl(latestStatus.sound_url || "");
+
+      setUserStatus("found");
+      setUserStatusMessage(`User ${user.username} verified.`);
+    } catch (error) {
+      setUserStatus("error");
+      setUserStatusMessage("User verification failed.");
+      setVerifiedUser(null);
+    }
   };
 
   return (
@@ -149,6 +246,10 @@ export default function Home() {
                   setUserId(event.target.value);
                   setUserStatus("idle");
                   setUserStatusMessage("");
+                  setVerifiedUser(null);
+                  setImageUrl("");
+                  setSoundUrl("");
+                  setRequestText("");
                 }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
@@ -186,14 +287,6 @@ export default function Home() {
                 )}
               </div>
             </div>
-            <h1 className="reveal-up delay-1 font-display text-4xl uppercase leading-[1.05] tracking-[0.08em] text-white sm:text-5xl">
-              Admin Console for Rollb0t
-            </h1>
-            <p className="reveal-up delay-2 max-w-xl text-base leading-7 text-[var(--muted)]">
-              Rollb0t streams device pulses, text mutations, and audio triggers in
-              one pane. Shape intensity, deploy new behaviors, and keep every
-              session in sync.
-            </p>
             <div className="reveal-up delay-3 flex flex-wrap gap-3">
               <button
                 className={`rounded-full px-8 py-4 text-sm font-semibold uppercase tracking-[0.22em] transition ${
@@ -204,7 +297,13 @@ export default function Home() {
                     : "cursor-not-allowed border border-[var(--panel-border)] bg-[rgba(16,39,47,0.6)] text-[var(--muted)]"
                 }`}
                 onClick={() => {
-                  setArmed((value) => !value);
+                  setArmed((value) => {
+                    const next = !value;
+                    if (isVerified) {
+                      void syncStatus(next);
+                    }
+                    return next;
+                  });
                 }}
                 disabled={!isVerified}
               >
@@ -227,7 +326,7 @@ export default function Home() {
             <div className="mt-2 grid gap-2">
               <div className="rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] p-3">
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-                  Theme word
+                  Transform settings
                 </label>
                 <div className="mt-3">
                   <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
@@ -251,13 +350,13 @@ export default function Home() {
                   <>
                     <input
                       className="mt-3 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
-                      placeholder="e.g. ducks, neon, glitch"
-                      value={themeWord}
-                      onChange={(event) => setThemeWord(event.target.value)}
+                      placeholder="e.g. make it sound like a pirate"
+                      value={requestText}
+                      onChange={(event) => setRequestText(event.target.value)}
                       disabled={!isVerified}
                     />
                     <div className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-                      Theme set to {themeCaps}
+                      Request set to {themeCaps || "NONE"}
                     </div>
                   </>
                 )}
@@ -269,18 +368,15 @@ export default function Home() {
                   <span className="text-white">{statusLabel}</span>
                 </div>
                 <div className="mt-3 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-                  Adjust each channel intensity.
+                  Choose transform intensity.
                 </div>
                 <div className="mt-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-                    Intensity preset
+                    Transform intensity
                   </div>
                   <div className="mt-3 flex gap-2">
                     {INTENSITY_PRESETS.map((preset, index) => {
-                      const isActive =
-                        textIntensity === preset &&
-                        audioIntensity === preset &&
-                        visualIntensity === preset;
+                      const isActive = transformLevel === preset;
                       return (
                         <button
                           key={preset}
@@ -289,11 +385,11 @@ export default function Home() {
                               ? "border-[var(--accent)] bg-[rgba(244,162,89,0.2)] text-white"
                               : "border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-white"
                           }`}
-                          onClick={() => setAllIntensity(preset)}
+                          onClick={() => setTransformLevel(preset)}
                           disabled={emergency || !isVerified}
                           aria-pressed={isActive}
                         >
-                          {index === 0 ? "Off" : index}
+                          {index + 1}
                         </button>
                       );
                     })}
@@ -307,6 +403,8 @@ export default function Home() {
                         className="mt-2 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
                         type="url"
                         placeholder="https://example.com/quack.mp3"
+                        value={soundUrl}
+                        onChange={(event) => setSoundUrl(event.target.value)}
                         disabled={!isVerified}
                       />
                     </div>
@@ -318,6 +416,8 @@ export default function Home() {
                         className="mt-2 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
                         type="url"
                         placeholder="https://example.com/duck.jpg"
+                        value={imageUrl}
+                        onChange={(event) => setImageUrl(event.target.value)}
                         disabled={!isVerified}
                       />
                     </div>
