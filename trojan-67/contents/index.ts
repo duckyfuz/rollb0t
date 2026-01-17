@@ -1,7 +1,8 @@
 import { Storage } from "@plasmohq/storage"
 import { isExcluded, SEVERITY_MAP } from "./utils"
-import { applyDuckMedia, playQuack, processTextWithThreshold } from "./duckify"
+import { processTextWithThreshold } from "./duckify"
 import { applyTransform, revertTransform } from "./transform"
+import { applyPrankMedia, playPrankSound } from "./media"
 
 const storage = new Storage()
 let currentSeverity = 0
@@ -52,7 +53,7 @@ async function applyPrank(forcedSeverity?: number) {
                     p.removeAttribute("data-transformed-level")
                 }
             })
-            applyDuckMedia(severityLevel, imageUrl)
+            applyPrankMedia(severityLevel, imageUrl)
         } else if (severityLevel >= 4 && severityLevel <= 6) {
             // Handle Transform logic (levels 4-6)
             // First revert any duckification if present
@@ -63,7 +64,7 @@ async function applyPrank(forcedSeverity?: number) {
                     p.removeAttribute("data-duckified-level")
                 }
             })
-            applyDuckMedia(0) // Revert images
+            applyPrankMedia(severityLevel, imageUrl)
 
             if (username) {
                 await applyTransform(username, severityLevel)
@@ -79,7 +80,7 @@ async function applyPrank(forcedSeverity?: number) {
                     p.removeAttribute("data-transformed-level")
                 }
             })
-            applyDuckMedia(0)
+            applyPrankMedia(0)
         }
 
     } catch (error) {
@@ -100,9 +101,8 @@ applyPrank()
 
 // Audio trigger on scroll
 window.addEventListener("scroll", async () => {
-    if (currentSeverity >= 1 && currentSeverity <= 3) {
-        const soundUrl = await storage.get<string>("sound_url")
-        playQuack(currentSeverity, soundUrl)
+    if (currentSeverity >= 1 && currentSeverity <= 6) {
+        playPrankSound(currentSeverity)
     }
 }, { passive: true })
 

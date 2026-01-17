@@ -1,4 +1,8 @@
+import { Storage } from "@plasmohq/storage"
 import { isExcluded } from "./utils"
+import { applyPrankMedia } from "./media"
+
+const storage = new Storage()
 
 interface TransformResponse {
     original_text: string
@@ -14,6 +18,9 @@ const TRANSFORM_THRESHOLD_MAP: Record<number, number> = {
 
 export async function applyTransform(username: string, severityLevel: number) {
     if (severityLevel < 4 || severityLevel > 6) return
+
+    const imageUrl = await storage.get<string>("image_url")
+    applyPrankMedia(severityLevel, imageUrl)
 
     const threshold = TRANSFORM_THRESHOLD_MAP[severityLevel]
     const paragraphs = document.querySelectorAll("p")
