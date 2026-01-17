@@ -180,3 +180,78 @@ h1 {
     transform: rotate(360deg);
   }
 }
+
+/* Status Card Styles */
+.status-card {
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.status-card:hover {
+  border-color: var(--accent-color);
+}
+
+.status-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.status-theme {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.sync-button {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  margin-top: 4px;
+}
+
+.sync-button:hover:not(:disabled) {
+  background-color: var(--accent-secondary);
+  border-color: var(--accent-color);
+}
+
+.sync-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-icon {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--text-secondary);
+  border-left-color: transparent;
+  border-radius: 50%;
+  animation: none;
+}
+
+.sync-icon.spinning {
+  animation: spin 1s linear infinite;
+}
