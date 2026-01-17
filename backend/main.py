@@ -52,6 +52,7 @@ async def create_user(user: UserCreate):
                     "user_uuid": user_uuid,
                     "is_enabled": False,
                     "theme": None,
+                    "request": None,
                     "image_url": None,
                     "sound_url": None,
                 }
@@ -118,6 +119,7 @@ async def create_status(status: StatusCreate):
                     "user_uuid": status.user_uuid,
                     "is_enabled": status.is_enabled,
                     "theme": status.theme,
+                    "request": status.request,
                     "image_url": status.image_url,
                     "sound_url": status.sound_url,
                 }
@@ -161,6 +163,8 @@ async def update_status(status_id: int, status: StatusUpdate):
             update_data["is_enabled"] = status.is_enabled
         if status.theme is not None:
             update_data["theme"] = status.theme
+        if status.request is not None:
+            update_data["request"] = status.request
         if status.image_url is not None:
             update_data["image_url"] = status.image_url
         if status.sound_url is not None:
@@ -214,7 +218,7 @@ async def list_user_status(user_identifier: str):
 
 @app.post("/users/{username}/transform", response_model=TextTransformResponse)
 async def transform_text(username: str, request: TextTransformRequest):
-    """Transform text to match a user's theme using ChatGPT."""
+    """Transform text based on user's request and theme intensity."""
     try:
         # 1. Fetch the user by username
         user_response = (
@@ -226,7 +230,7 @@ async def transform_text(username: str, request: TextTransformRequest):
 
         user_uuid = user_response.data[0]["id"]
 
-        # 2. Fetch the user's status (theme)
+        # 2. Fetch the user's status (request and theme)
         status_response = (
             supabase.table("status").select("*").eq("user_uuid", user_uuid).execute()
         )
@@ -237,25 +241,56 @@ async def transform_text(username: str, request: TextTransformRequest):
             )
 
         status = status_response.data[0]
+        user_request = status.get("request")
         theme = status.get("theme")
 
-        # 3. If no theme is set, return the original text
-        if not theme:
+        # 3. If no request is set, return the original text
+        if not user_request:
             return TextTransformResponse(
                 original_text=request.text,
                 transformed_text=request.text,
-                theme=None,
+                theme=theme,
+                request=None,
             )
 
-        # 4. Use ChatGPT to transform the text based on the theme
-        system_prompt = (
-            "You are a subtle text transformation assistant. Your job is to rewrite text "
-            "to match a specific theme while keeping the changes as inconspicuous as possible. "
-            "The transformed text should maintain the same meaning and structure, but incorporate "
-            "the theme in a natural, subtle way. Do not make dramatic changes or add unnecessary content."
+        # 4. Map theme to transformation intensity
+        intensity_map = {
+            "transform_01": {
+                "level": "subtle",
+                "description": "Make minimal, barely noticeable changes that maintain the original tone and structure.",
+                "temperature": 0.5,
+            },
+            "transform_02": {
+                "level": "moderate",
+                "description": "Make noticeable but natural changes that clearly incorporate the theme while keeping readability.",
+                "temperature": 0.7,
+            },
+            "transform_03": {
+                "level": "intense",
+                "description": "Make dramatic, obvious changes that heavily emphasize the theme throughout the text.",
+                "temperature": 0.9,
+            },
+        }
+
+        # Get intensity settings, default to moderate if theme is not recognized
+        intensity = intensity_map.get(
+            theme,
+            {
+                "level": "moderate",
+                "description": "Make noticeable but natural changes.",
+                "temperature": 0.7,
+            },
         )
 
-        user_prompt = f"""Transform the following text to match the theme: "{theme}"
+        # 5. Use ChatGPT to transform the text based on the request and intensity
+        system_prompt = (
+            f"You are a text transformation assistant. Your job is to rewrite text "
+            f"based on the user's specific request with a {intensity['level']} intensity level. "
+            f"{intensity['description']} "
+            f"The transformed text should maintain readability and coherence."
+        )
+
+        user_prompt = f"""Transform the following text according to this request: "{user_request}"
 
 Original text: {request.text}
 
@@ -267,7 +302,7 @@ Provide ONLY the transformed text, without any explanations or additional commen
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.7,
+            temperature=intensity["temperature"],
             max_tokens=500,
         )
 
@@ -277,6 +312,7 @@ Provide ONLY the transformed text, without any explanations or additional commen
             original_text=request.text,
             transformed_text=transformed_text,
             theme=theme,
+            request=user_request,
         )
 
     except HTTPException:

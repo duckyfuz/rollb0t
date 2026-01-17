@@ -28,6 +28,9 @@ class StatusCreate(BaseModel):
     user_uuid: str = Field(..., description="UUID of the user this status belongs to")
     is_enabled: bool = Field(default=False, description="Whether the status is enabled")
     theme: Optional[str] = Field(default=None, description="Theme setting for the user")
+    request: Optional[str] = Field(
+        default=None, description="User's transformation request text"
+    )
     image_url: Optional[str] = Field(default=None, description="URL to user's image")
     sound_url: Optional[str] = Field(default=None, description="URL to user's sound")
 
@@ -39,6 +42,9 @@ class StatusUpdate(BaseModel):
         default=None, description="Whether the status is enabled"
     )
     theme: Optional[str] = Field(default=None, description="Theme setting for the user")
+    request: Optional[str] = Field(
+        default=None, description="User's transformation request text"
+    )
     image_url: Optional[str] = Field(default=None, description="URL to user's image")
     sound_url: Optional[str] = Field(default=None, description="URL to user's sound")
 
@@ -51,6 +57,7 @@ class StatusResponse(BaseModel):
     user_uuid: str
     is_enabled: bool
     theme: Optional[str]
+    request: Optional[str]
     image_url: Optional[str]
     sound_url: Optional[str]
 
@@ -70,3 +77,4 @@ class TextTransformResponse(BaseModel):
     original_text: str
     transformed_text: str
     theme: Optional[str] = Field(description="Theme that was applied, if any")
+    request: Optional[str] = Field(description="User's transformation request, if any")
