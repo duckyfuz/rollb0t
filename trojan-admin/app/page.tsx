@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const KNOWN_USERS = new Set(["r0-01", "rollb0t", "admin", "duck-ops"]);
 const SAMPLE_USER = "r0-01";
-const INTENSITY_PRESETS = [20, 60, 100];
+const INTENSITY_PRESETS = [0, 20, 60, 100];
 
 const clamp = (value: number, min = 0, max = 100) => {
   return Math.min(max, Math.max(min, value));
@@ -23,6 +23,7 @@ type UserCheckStatus = "idle" | "found" | "missing" | "error";
 
 export default function Home() {
   const [armed, setArmed] = useState(false);
+  const [mode, setMode] = useState<"duck" | "transform">("duck");
   const [themeWord, setThemeWord] = useState("duck");
   const [textIntensity, setTextIntensity] = useState(35);
   const [audioIntensity, setAudioIntensity] = useState(20);
@@ -79,23 +80,11 @@ export default function Home() {
       ? "Console active"
       : "Console idle";
 
-  const intensityControls = [
-    {
-      label: "Text mutation",
-      value: textIntensity,
-      setValue: setTextIntensity,
-    },
-    {
-      label: "Audio",
-      value: audioIntensity,
-      setValue: setAudioIntensity,
-    },
-    {
-      label: "Visual swaps",
-      value: visualIntensity,
-      setValue: setVisualIntensity,
-    },
-  ];
+  const setAllIntensity = (value: number) => {
+    setTextIntensity(value);
+    setAudioIntensity(value);
+    setVisualIntensity(value);
+  };
 
 
 
@@ -198,7 +187,7 @@ export default function Home() {
               </div>
             </div>
             <h1 className="reveal-up delay-1 font-display text-4xl uppercase leading-[1.05] tracking-[0.08em] text-white sm:text-5xl">
-              Orchestrate the prank grid without leaving the war room.
+              Admin Console for Rollb0t
             </h1>
             <p className="reveal-up delay-2 max-w-xl text-base leading-7 text-[var(--muted)]">
               Rollb0t streams device pulses, text mutations, and audio triggers in
@@ -233,9 +222,6 @@ export default function Home() {
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
                 Live intensity
               </div>
-              <div className="rounded-full border border-[var(--panel-border)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-2)]">
-                {themeTitle} mode
-              </div>
             </div>
 
             <div className="mt-2 grid gap-2">
@@ -243,16 +229,38 @@ export default function Home() {
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
                   Theme word
                 </label>
-                <input
-                  className="mt-3 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
-                  placeholder="e.g. ducks, neon, glitch"
-                  value={themeWord}
-                  onChange={(event) => setThemeWord(event.target.value)}
-                  disabled={!isVerified}
-                />
-                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-                  Theme set to {themeCaps}
+                <div className="mt-3">
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
+                    Mode
+                  </label>
+                  <div className="select-wrap mt-2">
+                    <select
+                      className="select-field w-full rounded-full border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white focus:border-[var(--accent-2)] focus:outline-none"
+                      value={mode}
+                      onChange={(event) =>
+                        setMode(event.target.value as "duck" | "transform")
+                      }
+                      disabled={!isVerified}
+                    >
+                      <option value="duck">Duck mode</option>
+                      <option value="transform">Transform mode</option>
+                    </select>
+                  </div>
                 </div>
+                {mode === "transform" && (
+                  <>
+                    <input
+                      className="mt-3 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+                      placeholder="e.g. ducks, neon, glitch"
+                      value={themeWord}
+                      onChange={(event) => setThemeWord(event.target.value)}
+                      disabled={!isVerified}
+                    />
+                    <div className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+                      Theme set to {themeCaps}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] p-3">
@@ -263,35 +271,57 @@ export default function Home() {
                 <div className="mt-3 text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
                   Adjust each channel intensity.
                 </div>
-                <div className="mt-3 grid gap-3">
-                  {intensityControls.map((control) => (
-                    <div key={control.label}>
-                      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-                        {control.label}
-                        <span className="text-white">{control.value}%</span>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        {INTENSITY_PRESETS.map((preset, index) => {
-                          const isActive = control.value === preset;
-                          return (
-                            <button
-                              key={preset}
-                              className={`h-9 flex-1 rounded-full border text-xs font-semibold uppercase tracking-[0.22em] transition ${
-                                isActive
-                                  ? "border-[var(--accent)] bg-[rgba(244,162,89,0.2)] text-white"
-                                  : "border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-white"
-                              }`}
-                              onClick={() => control.setValue(preset)}
-                              disabled={emergency || !isVerified}
-                              aria-pressed={isActive}
-                            >
-                              {index + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
+                <div className="mt-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
+                    Intensity preset
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    {INTENSITY_PRESETS.map((preset, index) => {
+                      const isActive =
+                        textIntensity === preset &&
+                        audioIntensity === preset &&
+                        visualIntensity === preset;
+                      return (
+                        <button
+                          key={preset}
+                          className={`h-12 flex-1 rounded-full border text-xs font-semibold uppercase tracking-[0.22em] transition ${
+                            isActive
+                              ? "border-[var(--accent)] bg-[rgba(244,162,89,0.2)] text-white"
+                              : "border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] text-[var(--muted)] hover:border-[var(--accent)] hover:text-white"
+                          }`}
+                          onClick={() => setAllIntensity(preset)}
+                          disabled={emergency || !isVerified}
+                          aria-pressed={isActive}
+                        >
+                          {index === 0 ? "Off" : index}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
+                        Sound URL (mp3)
+                      </label>
+                      <input
+                        className="mt-2 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+                        type="url"
+                        placeholder="https://example.com/quack.mp3"
+                        disabled={!isVerified}
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
+                        Image URL (jpg)
+                      </label>
+                      <input
+                        className="mt-2 w-full rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-sm text-white placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none"
+                        type="url"
+                        placeholder="https://example.com/duck.jpg"
+                        disabled={!isVerified}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="mt-5 rounded-2xl border border-[rgba(35,65,75,0.7)] bg-[rgba(9,24,31,0.7)] px-4 py-3 text-center">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--muted)]">
