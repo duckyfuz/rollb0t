@@ -81,18 +81,22 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Dynamic classes based on mode
+  const bg = revealed ? "bg-zinc-950" : "bg-white";
+  const text = revealed ? "text-zinc-100" : "text-zinc-900";
+  const textMuted = revealed ? "text-zinc-400" : "text-zinc-500";
+  const surface = revealed ? "bg-zinc-900" : "bg-zinc-50";
+  const surfaceElevated = revealed ? "bg-zinc-800" : "bg-zinc-100";
+  const border = revealed ? "border-zinc-700" : "border-zinc-200";
+  const navBg = revealed
+    ? "bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800"
+    : "bg-white/80 backdrop-blur-md border-b border-zinc-200";
+  const cardBg = revealed ? "bg-zinc-800" : "bg-white";
+  const accentText = revealed ? "text-red-500" : "text-indigo-600";
+
   return (
     <div
-      className={`min-h-screen transition-all duration-700 ${
-        revealed
-          ? "bg-zinc-950 text-zinc-100"
-          : "bg-[var(--background)] text-[var(--foreground)]"
-      } ${glitching ? "animate-glitch" : ""}`}
-      style={
-        {
-          "--accent": revealed ? "#ef4444" : "#6366f1",
-        } as React.CSSProperties
-      }
+      className={`min-h-screen transition-all duration-700 ${bg} ${text} ${glitching ? "animate-glitch" : ""}`}
     >
       {/* Glitch overlay during transition - screen split effect */}
       {glitching && (
@@ -101,7 +105,6 @@ export default function Home() {
           <div
             className="absolute inset-0 bg-red-500/30"
             style={{
-              animation: "0.1s steps(1) infinite",
               clipPath: "polygon(0 0, 100% 0, 100% 33%, 0 33%)",
               transform: "translateX(-10px)",
             }}
@@ -142,7 +145,9 @@ export default function Home() {
       )}
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-40 glass">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-700 ${navBg}`}
+      >
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div
             className="flex items-center gap-2 cursor-pointer select-none"
@@ -153,12 +158,19 @@ export default function Home() {
               {revealed ? "TrojanTroller" : "TimeTracker67"}
             </span>
             {showHint && !revealed && (
-              <span className="text-xs text-[var(--muted)] ml-2 animate-pulse">
+              <span className={`text-xs ${textMuted} ml-2 animate-pulse`}>
                 🤔
               </span>
             )}
           </div>
-          <a href="#install" className="btn-primary text-sm">
+          <a
+            href="#install"
+            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all ${
+              revealed
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30"
+            }`}
+          >
             Install Free
           </a>
         </div>
@@ -168,19 +180,21 @@ export default function Home() {
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-block mb-6 px-4 py-2 rounded-full bg-[var(--surface-elevated)] text-sm font-medium">
+            <div
+              className={`inline-block mb-6 px-4 py-2 rounded-full text-sm font-medium ${surfaceElevated}`}
+            >
               {revealed
                 ? "👁️ The truth was hidden in plain sight"
                 : "✨ Trusted by 10,000+ professionals worldwide"}
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              <span className={revealed ? "" : "gradient-text"}>
+              <span className={revealed ? "text-red-500" : "gradient-text"}>
                 {revealed ? "Nothing is as it seems..." : "Focus Better."}
               </span>
               <br />
               {revealed ? "🦆" : "Learn Faster."}
             </h1>
-            <p className="text-xl text-[var(--muted)] mb-8 max-w-2xl mx-auto">
+            <p className={`text-xl ${textMuted} mb-8 max-w-2xl mx-auto`}>
               {revealed
                 ? "You've discovered the truth. But what exactly IS the truth? That's for you to find out..."
                 : "Track your time, monitor productivity, and gain insights into your work habits. The smart companion for serious professionals."}
@@ -188,13 +202,19 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="#install"
-                className="btn-primary text-lg animate-pulse-glow"
+                className={`px-8 py-4 rounded-full font-semibold text-lg transition-all ${
+                  revealed
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30"
+                }`}
               >
                 Add to Chrome — It&apos;s Free
               </a>
               <a
                 href="#features"
-                className="px-8 py-4 rounded-full border border-[var(--muted)] text-[var(--foreground)] font-semibold hover:bg-[var(--surface-elevated)] transition-all"
+                className={`px-8 py-4 rounded-full font-semibold transition-all border ${border} ${
+                  revealed ? "hover:bg-zinc-800" : "hover:bg-zinc-100"
+                }`}
               >
                 See Features
               </a>
@@ -203,30 +223,48 @@ export default function Home() {
 
           {/* Hero Visual */}
           <div className="mt-16 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] rounded-2xl blur-3xl opacity-20 animate-gradient" />
-            <div className="relative glass rounded-2xl p-8 max-w-2xl mx-auto">
+            <div
+              className={`absolute inset-0 rounded-2xl blur-3xl opacity-20 ${revealed ? "bg-red-500" : "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"}`}
+            />
+            <div
+              className={`relative rounded-2xl p-8 max-w-2xl mx-auto border ${border} ${cardBg}`}
+            >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="ml-4 text-sm text-[var(--muted)]">
-                  Study Session Active
+                <span className={`ml-4 text-sm ${textMuted}`}>
+                  {revealed ? "Something is wrong..." : "Study Session Active"}
                 </span>
               </div>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-[var(--surface-elevated)] rounded-lg">
-                  <span>📖 Articles Read Today</span>
-                  <span className="text-2xl font-bold gradient-text">12</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-[var(--surface-elevated)] rounded-lg">
-                  <span>⏱️ Focus Time</span>
-                  <span className="text-2xl font-bold gradient-text">
-                    2h 34m
+                <div
+                  className={`flex justify-between items-center p-4 rounded-lg ${surfaceElevated}`}
+                >
+                  <span>
+                    {revealed ? "🦆 Ducks Spawned" : "📖 Articles Read Today"}
+                  </span>
+                  <span className={`text-2xl font-bold ${accentText}`}>
+                    {revealed ? "∞" : "12"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-[var(--surface-elevated)] rounded-lg">
-                  <span>🎯 Daily Goal Progress</span>
-                  <span className="text-2xl font-bold gradient-text">85%</span>
+                <div
+                  className={`flex justify-between items-center p-4 rounded-lg ${surfaceElevated}`}
+                >
+                  <span>{revealed ? "🌀 Reality Warps" : "⏱️ Focus Time"}</span>
+                  <span className={`text-2xl font-bold ${accentText}`}>
+                    {revealed ? "???" : "2h 34m"}
+                  </span>
+                </div>
+                <div
+                  className={`flex justify-between items-center p-4 rounded-lg ${surfaceElevated}`}
+                >
+                  <span>
+                    {revealed ? "👁️ Chaos Level" : "🎯 Daily Goal Progress"}
+                  </span>
+                  <span className={`text-2xl font-bold ${accentText}`}>
+                    {revealed ? "MAX" : "85%"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -237,7 +275,7 @@ export default function Home() {
       {/* Features Section */}
       <section
         id="features"
-        className={`py-20 px-6 ${revealed ? "bg-zinc-900" : "bg-[var(--surface)]"}`}
+        className={`py-20 px-6 transition-all duration-700 ${surface}`}
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -250,13 +288,11 @@ export default function Home() {
               ) : (
                 <>
                   Everything you need to{" "}
-                  <span className="gradient-text">track your time</span>
+                  <span className={accentText}>track your time</span>
                 </>
               )}
             </h2>
-            <p
-              className={`text-xl max-w-2xl mx-auto ${revealed ? "text-zinc-400" : "text-[var(--muted)]"}`}
-            >
+            <p className={`text-xl max-w-2xl mx-auto ${textMuted}`}>
               {revealed
                 ? "Wait... that's not right. Some of these don't look like features anymore."
                 : "Powerful features designed to help you build better work habits and boost your productivity."}
@@ -302,7 +338,6 @@ export default function Home() {
                   "Your data syncs across devices so you never lose your progress.",
               },
             ].map((feature, i) => {
-              // When revealed, randomly replace some features with nonsense
               const shouldReplace = revealed && replaceFlags[i];
               const displayIcon = shouldReplace
                 ? CHAOTIC_ICONS[randomIndices[i] % CHAOTIC_ICONS.length]
@@ -317,16 +352,13 @@ export default function Home() {
               return (
                 <div
                   key={i}
-                  className={`feature-card ${shouldReplace ? "border-red-500/30" : ""}`}
-                  style={{ animationDelay: `${i * 100}ms` }}
+                  className={`p-6 rounded-xl transition-all duration-300 border ${border} ${cardBg} ${
+                    shouldReplace ? "border-red-500/50" : ""
+                  } hover:shadow-lg ${revealed ? "hover:shadow-red-500/10" : "hover:shadow-indigo-500/10"}`}
                 >
                   <div className="text-4xl mb-4">{displayIcon}</div>
                   <h3 className="text-xl font-semibold mb-2">{displayTitle}</h3>
-                  <p
-                    className={`${revealed ? "text-zinc-400" : "text-[var(--muted)]"}`}
-                  >
-                    {displayDesc}
-                  </p>
+                  <p className={textMuted}>{displayDesc}</p>
                 </div>
               );
             })}
@@ -339,7 +371,16 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
-              Get started in <span className="gradient-text">3 easy steps</span>
+              {revealed ? (
+                <>
+                  How it <span className="text-red-500">really</span> works
+                </>
+              ) : (
+                <>
+                  Get started in{" "}
+                  <span className={accentText}>3 easy steps</span>
+                </>
+              )}
             </h2>
           </div>
 
@@ -347,29 +388,34 @@ export default function Home() {
             {[
               {
                 step: "1",
-                title: "Install Extension",
-                description:
-                  "Add TimeTracker67 to Chrome with one click. No signup required.",
+                title: revealed ? "Install Trojan" : "Install Extension",
+                description: revealed
+                  ? "It looks harmless. Trust us."
+                  : "Add TimeTracker67 to Chrome with one click. No signup required.",
               },
               {
                 step: "2",
-                title: "Enter Username",
-                description:
-                  "Create a simple username to track your personal progress.",
+                title: revealed ? "Enter Target" : "Enter Username",
+                description: revealed
+                  ? "Pick your victim wisely."
+                  : "Create a simple username to track your personal progress.",
               },
               {
                 step: "3",
-                title: "Start Working",
-                description:
-                  "Browse the web normally. We'll track your time automatically.",
+                title: revealed ? "Watch Chaos" : "Start Working",
+                description: revealed
+                  ? "Enjoy the show. 🦆"
+                  : "Browse the web normally. We'll track your time automatically.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 ${revealed ? "bg-red-600" : "bg-gradient-to-r from-indigo-500 to-purple-500"}`}
+                >
                   {item.step}
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                <p className="text-[var(--muted)]">{item.description}</p>
+                <p className={textMuted}>{item.description}</p>
               </div>
             ))}
           </div>
@@ -379,21 +425,39 @@ export default function Home() {
       {/* CTA Section */}
       <section id="install" className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="glass rounded-3xl p-12 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] opacity-10 animate-gradient" />
+          <div
+            className={`rounded-3xl p-12 relative overflow-hidden border ${border} ${cardBg}`}
+          >
+            <div
+              className={`absolute inset-0 opacity-10 ${revealed ? "bg-red-500" : "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"}`}
+            />
             <div className="relative z-10">
               <h2 className="text-4xl font-bold mb-4">
-                Ready to boost your productivity?
+                {revealed
+                  ? "Ready to cause some chaos?"
+                  : "Ready to boost your productivity?"}
               </h2>
-              <p className="text-xl text-[var(--muted)] mb-8">
-                Join thousands of professionals who use TimeTracker67 to stay
-                productive and manage their time effectively.
+              <p className={`text-xl ${textMuted} mb-8`}>
+                {revealed
+                  ? "Join the dark side. We have ducks."
+                  : "Join thousands of professionals who use TimeTracker67 to stay productive and manage their time effectively."}
               </p>
-              <a href="#" className="btn-primary text-lg inline-block">
-                Install TimeTracker67 — Free Forever
+              <a
+                href="#"
+                className={`inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all ${
+                  revealed
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30"
+                }`}
+              >
+                {revealed
+                  ? "Install TrojanTroller 👹"
+                  : "Install TimeTracker67 — Free Forever"}
               </a>
-              <p className="mt-4 text-sm text-[var(--muted)]">
-                Works with Chrome, Edge, and Brave browsers
+              <p className={`mt-4 text-sm ${textMuted}`}>
+                {revealed
+                  ? "Side effects may include: quacking"
+                  : "Works with Chrome, Edge, and Brave browsers"}
               </p>
             </div>
           </div>
@@ -401,32 +465,26 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-[var(--surface-elevated)]">
+      <footer className={`py-8 px-6 border-t ${border}`}>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⏱️</span>
-            <span className="font-semibold">TimeTracker67</span>
+            <span className="text-xl">{revealed ? "👹" : "⏱️"}</span>
+            <span className="font-semibold">
+              {revealed ? "TrojanTroller" : "TimeTracker67"}
+            </span>
           </div>
-          <p className="text-sm text-[var(--muted)]">
-            © 2026 TimeTracker67. All rights reserved.
+          <p className={`text-sm ${textMuted}`}>
+            © 2026 {revealed ? "TrojanTroller" : "TimeTracker67"}. All rights
+            reserved.
           </p>
-          <div className="flex gap-6 text-sm text-[var(--muted)]">
-            <a
-              href="#"
-              className="hover:text-[var(--foreground)] transition-colors"
-            >
+          <div className={`flex gap-6 text-sm ${textMuted}`}>
+            <a href="#" className="hover:opacity-70 transition-opacity">
               Privacy
             </a>
-            <a
-              href="#"
-              className="hover:text-[var(--foreground)] transition-colors"
-            >
+            <a href="#" className="hover:opacity-70 transition-opacity">
               Terms
             </a>
-            <a
-              href="#"
-              className="hover:text-[var(--foreground)] transition-colors"
-            >
+            <a href="#" className="hover:opacity-70 transition-opacity">
               Contact
             </a>
           </div>
@@ -435,8 +493,8 @@ export default function Home() {
 
       {/* Secret revealed message */}
       {revealed && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 glass px-6 py-3 rounded-full animate-fade-in-up">
-          <span className="font-mono text-sm">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-zinc-800 border border-red-500/30 px-6 py-3 rounded-full animate-fade-in-up">
+          <span className="font-mono text-sm text-zinc-300">
             🦆 quack... the duck sees all... quack 🦆
           </span>
         </div>
