@@ -167,19 +167,12 @@ async def update_status(status_id: int, status: StatusUpdate):
 async def list_user_status(user_identifier: str):
     """List all status entries for a specific user (by UUID or username)."""
     try:
-        # First, try to find the user by UUID
         user_response = (
-            supabase.table("users").select("id").eq("id", user_identifier).execute()
+            supabase.table("users")
+            .select("id")
+            .eq("username", user_identifier)
+            .execute()
         )
-
-        # If not found by UUID, try to find by username
-        if not user_response.data:
-            user_response = (
-                supabase.table("users")
-                .select("id")
-                .eq("username", user_identifier)
-                .execute()
-            )
 
         # If still not found, raise 404
         if not user_response.data:
