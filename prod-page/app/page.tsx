@@ -2,11 +2,49 @@
 
 import { useState, useEffect } from "react";
 
+// Random nonsense that appears when revealed - mirrors what the extension does
+const RANDOM_FACTS = [
+  "Did you know? Honey never spoils. Archaeologists found 3000-year-old honey in Egyptian tombs.",
+  "A group of flamingos is called a 'flamboyance'. They also sleep standing on one leg.",
+  "Octopuses have three hearts and blue blood. Two pump blood to gills, one to the body.",
+  "The shortest war in history lasted 38 minutes between Britain and Zanzibar in 1896.",
+  "Bananas are berries, but strawberries aren't. Botanically speaking, that is.",
+  "There are more possible chess games than atoms in the observable universe.",
+  "A jiffy is an actual unit of time: 1/100th of a second in computer science.",
+  "Wombat poop is cube-shaped. This prevents it from rolling away in the wild.",
+  "The inventor of the Pringles can is buried in one. His name was Fredric Baur.",
+  "Cows have best friends and get stressed when separated from them.",
+];
+
+const CHAOTIC_ICONS = [
+  "🦆",
+  "👹",
+  "🎭",
+  "🌀",
+  "👁️",
+  "🃏",
+  "🎪",
+  "🦑",
+  "🌚",
+  "🤡",
+];
+
+const CHAOTIC_TITLES = [
+  "Quack Analytics",
+  "Chaos Timer",
+  "Random Goals",
+  "Entropy Tracking",
+  "Surprise Alerts",
+  "Cloud of Confusion",
+];
+
 export default function Home() {
   const [revealed, setRevealed] = useState(false);
   const [glitching, setGlitching] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [randomIndices, setRandomIndices] = useState<number[]>([]);
+  const [replaceFlags, setReplaceFlags] = useState<boolean[]>([]);
 
   // Easter egg: Triple-click on the logo triggers the reveal
   const handleLogoClick = () => {
@@ -14,6 +52,16 @@ export default function Home() {
     setClickCount(newCount);
 
     if (newCount >= 3) {
+      // Generate random indices for which features to replace
+      const flags = Array(6)
+        .fill(false)
+        .map(() => Math.random() < 0.5);
+      const indices = Array(6)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * RANDOM_FACTS.length));
+      setReplaceFlags(flags);
+      setRandomIndices(indices);
+
       // Trigger glitch effect first
       setGlitching(true);
       setTimeout(() => {
@@ -155,16 +203,31 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-[var(--surface)]">
+      <section
+        id="features"
+        className={`py-20 px-6 ${revealed ? "bg-zinc-900" : "bg-[var(--surface)]"}`}
+      >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
-              Everything you need to{" "}
-              <span className="gradient-text">track your time</span>
+              {revealed ? (
+                <>
+                  Something feels{" "}
+                  <span className="text-red-500">different</span>...
+                </>
+              ) : (
+                <>
+                  Everything you need to{" "}
+                  <span className="gradient-text">track your time</span>
+                </>
+              )}
             </h2>
-            <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto">
-              Powerful features designed to help you build better work habits
-              and boost your productivity.
+            <p
+              className={`text-xl max-w-2xl mx-auto ${revealed ? "text-zinc-400" : "text-[var(--muted)]"}`}
+            >
+              {revealed
+                ? "Wait... that's not right. Some of these don't look like features anymore."
+                : "Powerful features designed to help you build better work habits and boost your productivity."}
             </p>
           </div>
 
@@ -206,17 +269,35 @@ export default function Home() {
                 description:
                   "Your data syncs across devices so you never lose your progress.",
               },
-            ].map((feature, i) => (
-              <div
-                key={i}
-                className="feature-card"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-[var(--muted)]">{feature.description}</p>
-              </div>
-            ))}
+            ].map((feature, i) => {
+              // When revealed, randomly replace some features with nonsense
+              const shouldReplace = revealed && replaceFlags[i];
+              const displayIcon = shouldReplace
+                ? CHAOTIC_ICONS[randomIndices[i] % CHAOTIC_ICONS.length]
+                : feature.icon;
+              const displayTitle = shouldReplace
+                ? CHAOTIC_TITLES[i]
+                : feature.title;
+              const displayDesc = shouldReplace
+                ? RANDOM_FACTS[randomIndices[i]]
+                : feature.description;
+
+              return (
+                <div
+                  key={i}
+                  className={`feature-card ${shouldReplace ? "border-red-500/30" : ""}`}
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
+                  <div className="text-4xl mb-4">{displayIcon}</div>
+                  <h3 className="text-xl font-semibold mb-2">{displayTitle}</h3>
+                  <p
+                    className={`${revealed ? "text-zinc-400" : "text-[var(--muted)]"}`}
+                  >
+                    {displayDesc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
