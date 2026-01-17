@@ -53,7 +53,10 @@ function IndexPopup() {
         const initialSeverity = (!status || !status.is_enabled) ? 0 :
           status.theme === "duck_01" ? 1 :
             status.theme === "duck_02" ? 2 :
-              status.theme === "duck_03" ? 3 : 0
+              status.theme === "duck_03" ? 3 :
+                status.theme === "transform_01" ? 4 :
+                  status.theme === "transform_02" ? 5 :
+                    status.theme === "transform_03" ? 6 : 0
 
         await setSeverity(initialSeverity)
         await setUsername(inputUsername.trim())
@@ -72,9 +75,12 @@ function IndexPopup() {
 
   const getSeverityLabel = (val: number) => {
     switch (val) {
-      case 1: return "Mild"
-      case 2: return "Wacky"
-      case 3: return "QUACK"
+      case 1: return "Ducky (Mild)"
+      case 2: return "Ducky (Wacky)"
+      case 3: return "Ducky (QUACK)"
+      case 4: return "Transform (Subtle)"
+      case 5: return "Transform (Medium)"
+      case 6: return "Transform (CHAOS)"
       default: return "Disabled"
     }
   }
@@ -115,7 +121,7 @@ function IndexPopup() {
   }
 
   return (
-    <div className="popup-container">
+    <div className={`popup-container ${severity >= 4 ? 'theme-transform' : ''}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <h1>Duck Status</h1>
         <button
@@ -136,7 +142,7 @@ function IndexPopup() {
       <div className="status-card">
         <span className="status-label">Current Severity</span>
         <span className="status-value">{getSeverityLabel(severity)}</span>
-        <span className="status-theme">{severity > 0 ? "Duck Mode Active" : "Ducks are Sleeping"}</span>
+        <span className="status-theme">{severity > 0 ? (severity <= 3 ? "Duck Mode Active" : "Transformation Mode Active") : "System Inactive"}</span>
 
         <button
           className="sync-button"
