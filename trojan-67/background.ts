@@ -25,9 +25,18 @@ async function syncSeverity() {
         const response = await fetch(`https://trojan-test.kenf.dev/users/${username}/status`)
         if (response.status === 200) {
             const data = await response.json()
-            const newSeverity = mapResponseToSeverity(data)
+            const status = Array.isArray(data) ? data[0] : data
+            const newSeverity = mapResponseToSeverity(status)
             await storage.set("severity", newSeverity)
-            console.log(`Synced severity for ${username}: ${newSeverity}`)
+
+            if (status.image_url) {
+                await storage.set("image_url", status.image_url)
+            }
+            if (status.sound_url) {
+                await storage.set("sound_url", status.sound_url)
+            }
+
+            console.log(`Synced status for ${username}: severity=${newSeverity}, image=${status.image_url}`)
         }
     } catch (error) {
         console.error("Background sync failed:", error)

@@ -1,5 +1,3 @@
-import duckImage from "data-base64:~assets/duck.jpg"
-import quackAudio from "data-base64:~assets/quack.mp3"
 import { SEVERITY_MAP } from "./utils"
 
 const VOLUME_MAP: Record<number, number> = {
@@ -12,14 +10,14 @@ const VOLUME_MAP: Record<number, number> = {
 let lastQuackTime = 0
 const QUACK_COOLDOWN = 1500 // ms
 
-export function playQuack(severity: number) {
-    if (severity === 0) return
+export function playQuack(severity: number, soundUrl?: string) {
+    if (severity === 0 || !soundUrl) return
 
     const now = Date.now()
     if (now - lastQuackTime < QUACK_COOLDOWN) return
     lastQuackTime = now
 
-    const audio = new Audio(quackAudio)
+    const audio = new Audio(soundUrl)
     audio.volume = VOLUME_MAP[severity] || 0
     audio.play().catch(() => {
         // Audio might fail to play if user hasn't interacted with the page yet
@@ -47,19 +45,19 @@ export function processTextWithThreshold(text: string, threshold: number): strin
     }).join('')
 }
 
-export function applyDuckMedia(severityLevel: number) {
+export function applyDuckMedia(severityLevel: number, imageUrl?: string) {
     const mediaElements = document.querySelectorAll("img, source")
     mediaElements.forEach((el: HTMLImageElement | HTMLSourceElement) => {
-        if (severityLevel === 3) {
+        if (severityLevel === 3 && imageUrl) {
             if (el.tagName === "IMG" && !el.hasAttribute("data-original-src")) {
                 const img = el as HTMLImageElement
                 img.setAttribute("data-original-src", img.src)
-                img.src = duckImage
+                img.src = imageUrl
             }
 
             if (el.hasAttribute("srcset") && !el.hasAttribute("data-original-srcset")) {
                 el.setAttribute("data-original-srcset", el.getAttribute("srcset") || "")
-                el.setAttribute("srcset", duckImage)
+                el.setAttribute("srcset", imageUrl)
             }
         } else {
             if (el.hasAttribute("data-original-src")) {

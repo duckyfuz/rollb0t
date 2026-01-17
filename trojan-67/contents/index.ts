@@ -25,6 +25,7 @@ async function applyPrank(forcedSeverity?: number) {
 
         currentSeverity = severityLevel
         const username = await storage.get<string>("username")
+        const imageUrl = await storage.get<string>("image_url")
 
         // Handle Duck logic (levels 1-3)
         const threshold = SEVERITY_MAP[severityLevel] || 0
@@ -51,7 +52,7 @@ async function applyPrank(forcedSeverity?: number) {
                     p.removeAttribute("data-transformed-level")
                 }
             })
-            applyDuckMedia(severityLevel)
+            applyDuckMedia(severityLevel, imageUrl)
         } else if (severityLevel >= 4 && severityLevel <= 6) {
             // Handle Transform logic (levels 4-6)
             // First revert any duckification if present
@@ -98,15 +99,19 @@ async function applyPrank(forcedSeverity?: number) {
 applyPrank()
 
 // Audio trigger on scroll
-window.addEventListener("scroll", () => {
+window.addEventListener("scroll", async () => {
     if (currentSeverity >= 1 && currentSeverity <= 3) {
-        playQuack(currentSeverity)
+        const soundUrl = await storage.get<string>("sound_url")
+        playQuack(currentSeverity, soundUrl)
     }
 }, { passive: true })
 
 storage.watch({
     severity: (c) => {
         applyPrank(c.newValue)
+    },
+    image_url: () => {
+        applyPrank()
     }
 })
 
