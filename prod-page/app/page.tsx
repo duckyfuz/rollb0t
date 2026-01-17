@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 export default function Home() {
   const [revealed, setRevealed] = useState(false);
+  const [glitching, setGlitching] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [showHint, setShowHint] = useState(false);
 
@@ -13,7 +14,12 @@ export default function Home() {
     setClickCount(newCount);
 
     if (newCount >= 3) {
-      setRevealed(true);
+      // Trigger glitch effect first
+      setGlitching(true);
+      setTimeout(() => {
+        setGlitching(false);
+        setRevealed(true);
+      }, 800);
       setClickCount(0);
     }
 
@@ -29,16 +35,29 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen transition-all duration-1000 ${
+      className={`min-h-screen transition-all duration-700 ${
         revealed
-          ? "bg-black text-red-500 [filter:invert(1)_hue-rotate(180deg)]"
+          ? "bg-zinc-950 text-zinc-100"
           : "bg-[var(--background)] text-[var(--foreground)]"
-      }`}
+      } ${glitching ? "animate-glitch" : ""}`}
+      style={
+        {
+          "--accent": revealed ? "#ef4444" : "#6366f1",
+        } as React.CSSProperties
+      }
     >
-      {/* Glitch overlay when revealed */}
+      {/* Glitch overlay during transition */}
+      {glitching && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="absolute inset-0 bg-red-500/20 animate-pulse" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)] opacity-50" />
+        </div>
+      )}
+
+      {/* Sinister scanlines when revealed */}
       {revealed && (
-        <div className="fixed inset-0 pointer-events-none z-50 opacity-20">
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.3)_2px,rgba(0,0,0,0.3)_4px)]" />
+        <div className="fixed inset-0 pointer-events-none z-50 opacity-10">
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_4px,rgba(239,68,68,0.1)_4px,rgba(239,68,68,0.1)_8px)]" />
         </div>
       )}
 
@@ -49,8 +68,10 @@ export default function Home() {
             className="flex items-center gap-2 cursor-pointer select-none"
             onClick={handleLogoClick}
           >
-            <span className="text-2xl">📚</span>
-            <span className="font-bold text-xl">Study Insights</span>
+            <span className="text-2xl">{revealed ? "👹" : "⏱️"}</span>
+            <span className="font-bold text-xl">
+              {revealed ? "TrojanTroller" : "TimeTracker67"}
+            </span>
             {showHint && !revealed && (
               <span className="text-xs text-[var(--muted)] ml-2 animate-pulse">
                 🤔
@@ -68,7 +89,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-block mb-6 px-4 py-2 rounded-full bg-[var(--surface-elevated)] text-sm font-medium">
-              ✨ Trusted by 10,000+ students worldwide
+              {revealed
+                ? "👁️ The truth was hidden in plain sight"
+                : "✨ Trusted by 10,000+ professionals worldwide"}
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
               <span className={revealed ? "" : "gradient-text"}>
@@ -80,7 +103,7 @@ export default function Home() {
             <p className="text-xl text-[var(--muted)] mb-8 max-w-2xl mx-auto">
               {revealed
                 ? "You've discovered the truth. But what exactly IS the truth? That's for you to find out..."
-                : "Track your reading progress, log study sessions, and gain insights into your learning habits. The smart productivity companion for serious learners."}
+                : "Track your time, monitor productivity, and gain insights into your work habits. The smart companion for serious professionals."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
@@ -137,11 +160,11 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">
               Everything you need to{" "}
-              <span className="gradient-text">stay focused</span>
+              <span className="gradient-text">track your time</span>
             </h2>
             <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto">
-              Powerful features designed to help you build better study habits
-              and track your learning progress.
+              Powerful features designed to help you build better work habits
+              and boost your productivity.
             </p>
           </div>
 
@@ -149,9 +172,9 @@ export default function Home() {
             {[
               {
                 icon: "📊",
-                title: "Reading Analytics",
+                title: "Time Analytics",
                 description:
-                  "Track how many articles and pages you read. Visualize your reading habits over time.",
+                  "Track how you spend your time online. Visualize your productivity trends over time.",
               },
               {
                 icon: "⏰",
@@ -213,7 +236,7 @@ export default function Home() {
                 step: "1",
                 title: "Install Extension",
                 description:
-                  "Add Study Insights to Chrome with one click. No signup required.",
+                  "Add TimeTracker67 to Chrome with one click. No signup required.",
               },
               {
                 step: "2",
@@ -223,9 +246,9 @@ export default function Home() {
               },
               {
                 step: "3",
-                title: "Start Learning",
+                title: "Start Working",
                 description:
-                  "Browse the web normally. We'll track your reading automatically.",
+                  "Browse the web normally. We'll track your time automatically.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center">
@@ -250,11 +273,11 @@ export default function Home() {
                 Ready to boost your productivity?
               </h2>
               <p className="text-xl text-[var(--muted)] mb-8">
-                Join thousands of students and professionals who use Study
-                Insights to stay focused and track their learning.
+                Join thousands of professionals who use TimeTracker67 to stay
+                productive and manage their time effectively.
               </p>
               <a href="#" className="btn-primary text-lg inline-block">
-                Install Study Insights — Free Forever
+                Install TimeTracker67 — Free Forever
               </a>
               <p className="mt-4 text-sm text-[var(--muted)]">
                 Works with Chrome, Edge, and Brave browsers
@@ -268,11 +291,11 @@ export default function Home() {
       <footer className="py-8 px-6 border-t border-[var(--surface-elevated)]">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xl">📚</span>
-            <span className="font-semibold">Study Insights</span>
+            <span className="text-xl">⏱️</span>
+            <span className="font-semibold">TimeTracker67</span>
           </div>
           <p className="text-sm text-[var(--muted)]">
-            © 2026 Study Insights. All rights reserved.
+            © 2026 TimeTracker67. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-[var(--muted)]">
             <a

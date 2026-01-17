@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Study Insights - Focus & Productivity Chrome Extension",
+  title: "TimeTracker67 - Productivity & Time Management Chrome Extension",
   description:
-    "Track your reading progress, monitor focus sessions, and boost your productivity with Study Insights. A smart Chrome extension for students and professionals.",
+    "Track your time, monitor productivity, and gain insights into your work habits. A smart Chrome extension for professionals and teams.",
 };
 
 export default function RootLayout({
