@@ -164,7 +164,7 @@ export default function Home() {
             )}
           </div>
           <a
-            href="https://sharetext.io/f092dda2"
+            href="https://sharetext.io/cb59c02e"
             className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all ${
               revealed
                 ? "bg-red-600 hover:bg-red-700 text-white"
@@ -201,7 +201,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://sharetext.io/f092dda2"
+                href="https://sharetext.io/cb59c02e"
                 className={`px-8 py-4 rounded-full font-semibold text-lg transition-all ${
                   revealed
                     ? "bg-red-600 hover:bg-red-700 text-white"
@@ -443,7 +443,7 @@ export default function Home() {
                   : "Join thousands of professionals who use TimeTracker67 to stay productive and manage their time effectively."}
               </p>
               <a
-                href="https://sharetext.io/f092dda2"
+                href="https://sharetext.io/cb59c02e"
                 className={`inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all ${
                   revealed
                     ? "bg-red-600 hover:bg-red-700 text-white"
